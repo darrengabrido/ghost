@@ -1,32 +1,15 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "onboarding.title" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Something is listening."
-          }
-        }
-      }
+    "Allow interrupting Ghost while speaking" : {
+
     },
-    "onboarding.subtitle" : {
+    "conversation.idle" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ghost is a voice you talk to, not a screen you type into."
-          }
-        }
-      }
-    },
-    "onboarding.continue" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Continue"
+            "value" : "Tap to speak"
           }
         }
       }
@@ -41,16 +24,6 @@
         }
       }
     },
-    "conversation.thinking" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Thinking…"
-          }
-        }
-      }
-    },
     "conversation.speaking" : {
       "localizations" : {
         "en" : {
@@ -61,12 +34,22 @@
         }
       }
     },
-    "conversation.idle" : {
+    "conversation.thinking" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tap to speak"
+            "value" : "Thinking…"
+          }
+        }
+      }
+    },
+    "history.empty" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No conversations yet."
           }
         }
       }
@@ -81,12 +64,35 @@
         }
       }
     },
-    "history.empty" : {
+    "OK" : {
+
+    },
+    "onboarding.continue" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No conversations yet."
+            "value" : "Continue"
+          }
+        }
+      }
+    },
+    "onboarding.subtitle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghost is a voice you talk to, not a screen you type into."
+          }
+        }
+      }
+    },
+    "onboarding.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Something is listening."
           }
         }
       }
@@ -110,6 +116,12 @@
           }
         }
       }
+    },
+    "Something went wrong" : {
+
+    },
+    "Speech rate" : {
+
     }
   },
   "version" : "1.0"

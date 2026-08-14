@@ -1,8 +1,9 @@
 @testable import Ghost
 
 /// Scripted `SpeechRecognizer` for exercising `VoiceEngine`/ViewModel
-/// logic without touching `Speech`/`AVAudioEngine`.
-@MainActor
+/// logic without touching `Speech`/`AVAudioEngine`. Not `@MainActor` —
+/// matches `SpeechRecognizer`, which is deliberately unisolated since
+/// real implementations receive callbacks off the main queue.
 final class MockSpeechRecognizer: SpeechRecognizer {
     var eventsToEmit: [VoiceEvent] = [.finalTranscript("test utterance")]
     private(set) var stopCallCount = 0
