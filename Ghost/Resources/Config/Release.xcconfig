@@ -1,0 +1,6 @@
+// Release build settings.
+// Provider/API configuration lives in Secrets.xcconfig (gitignored) —
+// copy Secrets.xcconfig.example to Secrets.xcconfig before building.
+#include? "Secrets.xcconfig"
+
+GHOST_ENVIRONMENT = release

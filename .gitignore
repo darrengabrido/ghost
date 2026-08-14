@@ -1,0 +1,50 @@
+# Xcode (generated project — XcodeGen owns this, never commit it)
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+DerivedData/
+.build/
+.swiftpm/
+
+# Xcode 8+ new build system
+*.xcscmblueprint
+*.xccheckout
+
+# Compiled files
+*.o
+*.LinkFileList
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# Simulator / device logs
+*.moved-aside
+*.xcuserstate
+
+# CocoaPods / Carthage (not used, kept for safety if added later)
+Pods/
+Carthage/Build/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Secrets — never commit real keys, only the .example template
+Ghost/Resources/Config/Secrets.xcconfig
+
+# macOS
+.DS_Store
+
+# SwiftLint / SwiftFormat caches
+.swiftlint-cache/
+
+# Environment
+.env
+.env.local
