@@ -25,15 +25,24 @@ final class AppRouter {
                 viewModel: ConversationViewModel(
                     voiceEngine: environment.voiceEngine,
                     aiConversationService: environment.aiConversationService,
-                    conversationStore: environment.conversationStore
-                )
+                    conversationStore: environment.conversationStore,
+                    preferences: environment.userPreferences
+                ),
+                router: self
             )
         case .history:
             HistoryView(
                 viewModel: HistoryViewModel(conversationStore: environment.conversationStore)
             )
         case .settings:
-            SettingsView(viewModel: SettingsViewModel())
+            SettingsView(
+                viewModel: SettingsViewModel(
+                    preferences: environment.userPreferences,
+                    apiKeyStore: environment.apiKeyStore,
+                    conversationStore: environment.conversationStore,
+                    voiceEngine: environment.voiceEngine
+                )
+            )
         }
     }
 }

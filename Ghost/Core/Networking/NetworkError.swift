@@ -15,7 +15,7 @@ enum NetworkError: LocalizedError {
         case .decoding:
             "Ghost couldn't understand the response it got back."
         case .missingConfiguration(let key):
-            "Missing configuration for \(key) — check Secrets.xcconfig."
+            "Missing configuration for \(key). Add your API key in Settings, or check Secrets.xcconfig."
         }
     }
 }

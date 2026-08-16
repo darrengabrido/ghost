@@ -48,4 +48,5 @@ struct VoiceEngineTests {
 @MainActor
 private final class NoOpSpeechSynthesizer: SpeechSynthesizer {
     func speak(_ text: String) async throws {}
+    func stopSpeaking() {}
 }

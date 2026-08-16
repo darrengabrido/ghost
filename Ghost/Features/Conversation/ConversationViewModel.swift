@@ -12,23 +12,33 @@ final class ConversationViewModel {
     private let voiceEngine: VoiceEngine
     private let aiConversationService: AIConversationService
     private let conversationStore: ConversationStore
+    private let preferences: UserPreferencesStore
     private var listenTask: Task<Void, Never>?
 
     init(
         voiceEngine: VoiceEngine,
         aiConversationService: AIConversationService,
-        conversationStore: ConversationStore
+        conversationStore: ConversationStore,
+        preferences: UserPreferencesStore
     ) {
         self.voiceEngine = voiceEngine
         self.aiConversationService = aiConversationService
         self.conversationStore = conversationStore
+        self.preferences = preferences
     }
 
     func micTapped() {
-        if orbState == .listening {
+        switch orbState {
+        case .listening:
             stopListening()
-        } else {
+        case .speaking:
+            guard preferences.isVoiceInterruptionEnabled else { return }
+            voiceEngine.stopSpeaking()
             startListening()
+        case .idle:
+            startListening()
+        case .thinking:
+            break
         }
     }
 
@@ -90,6 +100,8 @@ final class ConversationViewModel {
             errorMessage = error.localizedDescription
         }
 
-        orbState = .idle
+        if orbState == .speaking {
+            orbState = .idle
+        }
     }
 }

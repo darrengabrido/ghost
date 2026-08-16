@@ -12,24 +12,38 @@ struct AppEnvironment {
     let voiceEngine: VoiceEngine
     let aiConversationService: AIConversationService
     let conversationStore: ConversationStore
+    let userPreferences: UserPreferencesStore
+    let apiKeyStore: APIKeyStore
 
     static func live() -> AppEnvironment {
-        let aiConversationService: AIConversationService = (try? APIClient())
-            .map(AnthropicAIConversationService.init(client:))
-            ?? UnconfiguredAIConversationService()
+        let userPreferences = UserDefaultsPreferencesStore()
+        let apiKeyStore = KeychainAPIKeyStore()
+        let synthesizer = AVSpeechSynthesizerAdapter(preferences: userPreferences)
+
+        let aiConversationService: AIConversationService
+        if let client = try? APIClient(apiKeyStore: apiKeyStore) {
+            aiConversationService = AnthropicAIConversationService(client: client)
+        } else {
+            aiConversationService = UnconfiguredAIConversationService()
+        }
 
         return AppEnvironment(
-            voiceEngine: DefaultVoiceEngine(),
+            voiceEngine: DefaultVoiceEngine(synthesizer: synthesizer),
             aiConversationService: aiConversationService,
-            conversationStore: SwiftDataConversationStore()
+            conversationStore: SwiftDataConversationStore(),
+            userPreferences: userPreferences,
+            apiKeyStore: apiKeyStore
         )
     }
 
     static func preview() -> AppEnvironment {
-        AppEnvironment(
+        let userPreferences = InMemoryUserPreferencesStore()
+        return AppEnvironment(
             voiceEngine: MockVoiceEngine(),
             aiConversationService: MockAIConversationService(),
-            conversationStore: InMemoryConversationStore()
+            conversationStore: InMemoryConversationStore(),
+            userPreferences: userPreferences,
+            apiKeyStore: InMemoryAPIKeyStore()
         )
     }
 }
