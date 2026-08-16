@@ -14,9 +14,13 @@ struct AppEnvironment {
     let conversationStore: ConversationStore
 
     static func live() -> AppEnvironment {
-        AppEnvironment(
+        let aiConversationService: AIConversationService = (try? APIClient())
+            .map(AnthropicAIConversationService.init(client:))
+            ?? UnconfiguredAIConversationService()
+
+        return AppEnvironment(
             voiceEngine: DefaultVoiceEngine(),
-            aiConversationService: UnconfiguredAIConversationService(),
+            aiConversationService: aiConversationService,
             conversationStore: SwiftDataConversationStore()
         )
     }

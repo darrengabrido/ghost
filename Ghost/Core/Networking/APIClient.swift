@@ -26,6 +26,11 @@ struct APIClient {
         self.session = session
     }
 
+    /// Exposes the configured API key for adapters whose provider expects a
+    /// custom auth header (e.g. Anthropic's `x-api-key`) instead of this
+    /// client's default `Authorization: Bearer` scheme.
+    var authorizationKey: String { apiKey }
+
     func send(_ endpoint: Endpoint) async throws -> Data {
         var endpoint = endpoint
         endpoint.headers["Authorization"] = "Bearer \(apiKey)"
