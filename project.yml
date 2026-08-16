@@ -26,6 +26,12 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - path: Ghost
+        excludes:
+          - Resources/Assets.xcassets
+          - Resources/Localizable.xcstrings
+          - Resources/Config
+          - Resources/Info.plist
+          - Resources/Ghost.entitlements
     resources:
       - path: Ghost/Resources/Assets.xcassets
       - path: Ghost/Resources/Localizable.xcstrings

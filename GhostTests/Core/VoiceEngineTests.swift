@@ -1,5 +1,5 @@
-import Testing
 @testable import Ghost
+import Testing
 
 @MainActor
 struct VoiceEngineTests {
@@ -48,4 +48,5 @@ struct VoiceEngineTests {
 @MainActor
 private final class NoOpSpeechSynthesizer: SpeechSynthesizer {
     func speak(_ text: String) async throws {}
+    func stopSpeaking() {}
 }

@@ -21,6 +21,9 @@ protocol VoiceEngine {
 
     /// Speaks the given text, suspending until playback finishes.
     func speak(_ text: String) async throws
+
+    /// Interrupts in-flight speech. Safe to call when nothing is speaking.
+    func stopSpeaking()
 }
 
 /// Default production implementation, composed from `SpeechRecognizer` +
@@ -32,10 +35,11 @@ final class DefaultVoiceEngine: VoiceEngine {
     private let recognizer: SpeechRecognizer
     private let synthesizer: SpeechSynthesizer
     private let audioSession: AudioSessionManager
+    private var isSpeaking = false
 
     init(
         recognizer: SpeechRecognizer = SFSpeechRecognizerAdapter(),
-        synthesizer: SpeechSynthesizer = AVSpeechSynthesizerAdapter(),
+        synthesizer: SpeechSynthesizer,
         audioSession: AudioSessionManager = AudioSessionManager()
     ) {
         self.recognizer = recognizer
@@ -66,8 +70,19 @@ final class DefaultVoiceEngine: VoiceEngine {
     }
 
     func speak(_ text: String) async throws {
+        isSpeaking = true
         try audioSession.activate(for: .playback)
-        defer { audioSession.deactivate() }
+        defer {
+            if isSpeaking {
+                audioSession.deactivate()
+            }
+            isSpeaking = false
+        }
         try await synthesizer.speak(text)
+    }
+
+    func stopSpeaking() {
+        isSpeaking = false
+        synthesizer.stopSpeaking()
     }
 }

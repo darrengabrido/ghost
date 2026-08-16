@@ -43,6 +43,14 @@ final class SwiftDataConversationStore: ConversationStore {
         container.mainContext.delete(record)
         try container.mainContext.save()
     }
+
+    func deleteAll() async throws {
+        let records = try container.mainContext.fetch(FetchDescriptor<ConversationRecord>())
+        for record in records {
+            container.mainContext.delete(record)
+        }
+        try container.mainContext.save()
+    }
 }
 
 /// In-memory `ConversationStore` for SwiftUI previews and unconfigured
@@ -62,5 +70,9 @@ final class InMemoryConversationStore: ConversationStore {
 
     func delete(_ record: ConversationRecord) async throws {
         records.removeAll { $0.id == record.id }
+    }
+
+    func deleteAll() async throws {
+        records.removeAll()
     }
 }

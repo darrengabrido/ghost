@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ConversationView: View {
     var viewModel: ConversationViewModel
+    var router: AppRouter
 
     var body: some View {
         ZStack {
@@ -27,6 +28,24 @@ struct ConversationView: View {
                 .padding(.bottom, Theme.Spacing.xl)
             }
             .padding(.top, Theme.Spacing.lg)
+        }
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    router.push(.history)
+                } label: {
+                    Image(systemName: "clock")
+                }
+                .accessibilityLabel(String(localized: "history.title"))
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    router.push(.settings)
+                } label: {
+                    Image(systemName: "gearshape")
+                }
+                .accessibilityLabel(String(localized: "settings.title"))
+            }
         }
         .alert(
             "Something went wrong",

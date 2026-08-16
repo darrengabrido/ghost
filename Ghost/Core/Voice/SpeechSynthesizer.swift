@@ -3,6 +3,7 @@ import AVFoundation
 @MainActor
 protocol SpeechSynthesizer {
     func speak(_ text: String) async throws
+    func stopSpeaking()
 }
 
 /// Default text-to-speech using `AVSpeechSynthesizer`. Swap for a
@@ -13,21 +14,32 @@ protocol SpeechSynthesizer {
 final class AVSpeechSynthesizerAdapter: NSObject, SpeechSynthesizer {
     private let synthesizer = AVSpeechSynthesizer()
     private var continuation: CheckedContinuation<Void, Error>?
+    private let preferences: UserPreferencesStore
 
-    override init() {
+    init(preferences: UserPreferencesStore) {
+        self.preferences = preferences
         super.init()
         synthesizer.delegate = self
     }
 
     func speak(_ text: String) async throws {
         let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate
+        if preferences.voiceIdentifier.isEmpty {
+            utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+        } else {
+            utterance.voice = AVSpeechSynthesisVoice(identifier: preferences.voiceIdentifier)
+                ?? AVSpeechSynthesisVoice(language: "en-US")
+        }
+        utterance.rate = Float(preferences.speechRate)
 
         try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation
             synthesizer.speak(utterance)
         }
+    }
+
+    func stopSpeaking() {
+        synthesizer.stopSpeaking(at: .immediate)
     }
 }
 
