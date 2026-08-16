@@ -1,5 +1,5 @@
-import Testing
 @testable import Ghost
+import Testing
 
 @MainActor
 struct ConversationViewModelTests {

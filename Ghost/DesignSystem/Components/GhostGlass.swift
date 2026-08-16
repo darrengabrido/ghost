@@ -2,6 +2,10 @@ import SwiftUI
 
 /// Liquid Glass card on iOS 26; falls back to `BlurBackground` on earlier
 /// versions so Ghost can keep an iOS 17 deployment target.
+///
+/// Liquid Glass APIs are stripped with `#if compiler(>=6.2)` so CI on
+/// Xcode 16 (Swift 6.0) still compiles; both branches of `#available`
+/// are type-checked against the current SDK.
 struct GhostGlass<Content: View>: View {
     enum Style {
         case regular
@@ -24,6 +28,7 @@ struct GhostGlass<Content: View>: View {
     }
 
     var body: some View {
+        #if compiler(>=6.2)
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
         if #available(iOS 26, *) {
             content
@@ -32,11 +37,19 @@ struct GhostGlass<Content: View>: View {
                     shape.strokeBorder(Color.ghostTextPrimary.opacity(0.07), lineWidth: 1)
                 }
         } else {
-            content
-                .background(BlurBackground(cornerRadius: cornerRadius))
+            fallback
         }
+        #else
+        fallback
+        #endif
     }
 
+    private var fallback: some View {
+        content
+            .background(BlurBackground(cornerRadius: cornerRadius))
+    }
+
+    #if compiler(>=6.2)
     @available(iOS 26, *)
     private var glass: Glass {
         switch style {
@@ -45,6 +58,7 @@ struct GhostGlass<Content: View>: View {
         case .accent: .regular.tint(Color.ghostAccent)
         }
     }
+    #endif
 }
 
 /// Groups sibling glass pieces so they share lighting. Identity on
@@ -59,6 +73,7 @@ struct GhostGlassContainer<Content: View>: View {
     }
 
     var body: some View {
+        #if compiler(>=6.2)
         if #available(iOS 26, *) {
             GlassEffectContainer(spacing: spacing) {
                 content
@@ -66,5 +81,8 @@ struct GhostGlassContainer<Content: View>: View {
         } else {
             content
         }
+        #else
+        content
+        #endif
     }
 }

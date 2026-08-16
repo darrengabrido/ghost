@@ -40,7 +40,7 @@ enum KeychainStore {
         switch status {
         case errSecSuccess:
             guard let data = result as? Data else { return nil }
-            return String(decoding: data, as: UTF8.self)
+            return String(bytes: data, encoding: .utf8)
         case errSecItemNotFound:
             return nil
         default:

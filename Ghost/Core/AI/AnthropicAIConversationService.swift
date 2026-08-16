@@ -75,7 +75,7 @@ struct AnthropicAIConversationService: AIConversationService {
             headers: [
                 "content-type": "application/json",
                 "anthropic-version": Self.anthropicVersion,
-                "x-api-key": try client.requireAPIKey(),
+                "x-api-key": try client.requireAPIKey()
             ],
             body: try JSONEncoder().encode(body)
         )

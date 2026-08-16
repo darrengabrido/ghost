@@ -15,13 +15,18 @@ struct GhostGlassButton: View {
     var action: () -> Void
 
     var body: some View {
+        #if compiler(>=6.2)
         if #available(iOS 26, *) {
             modernButton
         } else {
             fallbackButton
         }
+        #else
+        fallbackButton
+        #endif
     }
 
+    #if compiler(>=6.2)
     @available(iOS 26, *)
     @ViewBuilder
     private var modernButton: some View {
@@ -42,6 +47,7 @@ struct GhostGlassButton: View {
                 .foregroundStyle(Color.ghostDanger)
         }
     }
+    #endif
 
     private var fallbackButton: some View {
         Button(action: action) {
