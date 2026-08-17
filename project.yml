@@ -35,6 +35,8 @@ targets:
     resources:
       - path: Ghost/Resources/Assets.xcassets
       - path: Ghost/Resources/Localizable.xcstrings
+    dependencies:
+      - sdk: HealthKit.framework
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ghost.app

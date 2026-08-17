@@ -26,7 +26,9 @@ final class AppRouter {
                     voiceEngine: environment.voiceEngine,
                     aiConversationService: environment.aiConversationService,
                     conversationStore: environment.conversationStore,
-                    preferences: environment.userPreferences
+                    preferences: environment.userPreferences,
+                    healthDataProvider: environment.healthDataProvider,
+                    timelineStore: environment.timelineStore
                 ),
                 router: self
             )

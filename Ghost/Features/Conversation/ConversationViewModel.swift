@@ -13,19 +13,41 @@ final class ConversationViewModel {
     private let aiConversationService: AIConversationService
     private let conversationStore: ConversationStore
     private let preferences: UserPreferencesStore
+    private let healthDataProvider: HealthDataProvider
+    private let timelineStore: TimelineStore
     private var listenTask: Task<Void, Never>?
+    private var healthContext: String?
 
     init(
         voiceEngine: VoiceEngine,
         aiConversationService: AIConversationService,
         conversationStore: ConversationStore,
-        preferences: UserPreferencesStore
+        preferences: UserPreferencesStore,
+        healthDataProvider: HealthDataProvider,
+        timelineStore: TimelineStore
     ) {
         self.voiceEngine = voiceEngine
         self.aiConversationService = aiConversationService
         self.conversationStore = conversationStore
         self.preferences = preferences
+        self.healthDataProvider = healthDataProvider
+        self.timelineStore = timelineStore
     }
+
+    /// Called once when the conversation screen appears. Syncs recent
+    /// HealthKit data onto the shared timeline and summarizes it for later
+    /// AI calls — silently does nothing if HealthKit is unavailable or
+    /// permission was denied, and never blocks the UI on failure.
+    func start() async {
+        let sinceDate = Date.now.addingTimeInterval(-Self.healthLookback)
+        let syncService = HealthTimelineSyncService(provider: healthDataProvider, timelineStore: timelineStore)
+        _ = try? await syncService.sync(since: sinceDate)
+
+        let recentEvents = (try? await timelineStore.recentEvents(since: sinceDate)) ?? []
+        healthContext = HealthTimelineSummarizer.summarize(recentEvents)
+    }
+
+    private static let healthLookback: TimeInterval = 24 * 60 * 60
 
     func micTapped() {
         switch orbState {
@@ -85,7 +107,7 @@ final class ConversationViewModel {
 
         do {
             var reply = ""
-            for try await token in aiConversationService.streamResponse(to: messages) {
+            for try await token in aiConversationService.streamResponse(to: messages, healthContext: healthContext) {
                 reply += token
             }
 

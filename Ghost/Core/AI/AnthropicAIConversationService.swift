@@ -15,11 +15,11 @@ struct AnthropicAIConversationService: AIConversationService {
         self.client = client
     }
 
-    func streamResponse(to messages: [Message]) -> AsyncThrowingStream<String, Error> {
+    func streamResponse(to messages: [Message], healthContext: String?) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { continuation in
             let task = Task {
                 do {
-                    let endpoint = try makeEndpoint(for: messages)
+                    let endpoint = try makeEndpoint(for: messages, healthContext: healthContext)
                     for try await lineData in client.stream(endpoint) {
                         guard
                             let line = String(data: lineData, encoding: .utf8),
@@ -56,15 +56,15 @@ struct AnthropicAIConversationService: AIConversationService {
         }
     }
 
-    private func makeEndpoint(for messages: [Message]) throws -> Endpoint {
-        let turns = PromptBuilder.chatTurns(from: messages)
+    private func makeEndpoint(for messages: [Message], healthContext: String?) throws -> Endpoint {
+        let turns = PromptBuilder.chatTurns(from: messages, healthContext: healthContext)
             .filter { $0.role != "system" }
             .map { RequestBody.Turn(role: $0.role, content: $0.content) }
 
         let body = RequestBody(
             model: Self.model,
             maxTokens: Self.maxTokens,
-            system: PromptBuilder.systemPrompt,
+            system: PromptBuilder.systemPrompt(healthContext: healthContext),
             stream: true,
             messages: turns
         )
