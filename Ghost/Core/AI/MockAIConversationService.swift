@@ -10,6 +10,7 @@ struct MockAIConversationService: AIConversationService {
 
     func streamResponse(to messages: [Message], healthContext: String?) -> AsyncThrowingStream<String, Error> {
         onRequest?(healthContext)
+        let reply = reply
         return AsyncThrowingStream { continuation in
             Task {
                 for word in reply.split(separator: " ") {
