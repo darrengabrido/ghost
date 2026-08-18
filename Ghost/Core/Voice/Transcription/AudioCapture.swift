@@ -44,16 +44,47 @@ struct CapturedAudioBuffer: @unchecked Sendable {
 final class MicrophoneAudioCapture: AudioCapture, @unchecked Sendable {
     private let audioEngine = AVAudioEngine()
 
+    /// Below this RMS amplitude, a buffer counts as silence rather than speech.
+    private static let voiceAmplitudeThreshold: Float = 0.015
+    /// How much sustained silence after speech ends the utterance.
+    private static let silenceDurationToFinalize: TimeInterval = 1.2
+
     func startCapturing(
         onLevel: @escaping @Sendable ([CGFloat]) -> Void
     ) -> AsyncThrowingStream<CapturedAudioBuffer, Error> {
         AsyncThrowingStream { continuation in
             let inputNode = audioEngine.inputNode
             let format = inputNode.outputFormat(forBus: 0)
+            var hasDetectedSpeech = false
+            var silenceDuration: TimeInterval = 0
+            var hasFinishedCapturing = false
             // Runs on CoreAudio's real-time render thread, not the main
-            // queue — only touch thread-safe/local state in here.
+            // queue — only touch thread-safe/local state in here. The
+            // silence-tracking locals above are only ever touched from this
+            // one closure, so no additional locking is needed.
             inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in
+                guard !hasFinishedCapturing else { return }
+
                 onLevel(VoiceActivityDetector.amplitudeLevels(from: buffer))
+
+                let rms = VoiceActivityDetector.rmsAmplitude(from: buffer)
+                if rms >= Self.voiceAmplitudeThreshold {
+                    hasDetectedSpeech = true
+                    silenceDuration = 0
+                } else if hasDetectedSpeech {
+                    silenceDuration += Double(buffer.frameLength) / format.sampleRate
+                    if silenceDuration >= Self.silenceDurationToFinalize {
+                        hasFinishedCapturing = true
+                        // Finish (which tears the engine down via
+                        // `onTermination` below) off CoreAudio's real-time
+                        // thread — calling back into AVAudioEngine
+                        // (`removeTap`) from inside its own render callback
+                        // risks a deadlock.
+                        Task { continuation.finish() }
+                        return
+                    }
+                }
+
                 // CoreAudio owns `buffer` and may reuse/overwrite it the
                 // instant this callback returns, so it isn't safe to hand
                 // the original off to `continuation` for consumption on

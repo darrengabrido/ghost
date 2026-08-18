@@ -4,7 +4,7 @@ import Foundation
 /// provider's API expects. Kept separate from `AIConversationService` so
 /// prompt/persona tuning doesn't require touching networking code.
 enum PromptBuilder {
-    static let systemPrompt = """
+    private static let persona = """
     You are Ghost, a voice-first AI companion. You speak concisely and \
     naturally, the way someone would in conversation — not in bullet \
     points or long paragraphs, since your replies are spoken aloud.
@@ -36,8 +36,21 @@ enum PromptBuilder {
         let content: String
     }
 
-    static func chatTurns(from messages: [Message]) -> [ChatTurn] {
-        [ChatTurn(role: "system", content: systemPrompt)] + messages.map { message in
+    /// The persona above, plus — only when Ghost actually has some — a
+    /// short natural-language note on the user's recent health patterns
+    /// (see `HealthTimelineSummarizer`). Told explicitly to volunteer it
+    /// naturally rather than lead with it or recite raw numbers.
+    static func systemPrompt(healthContext: String? = nil) -> String {
+        guard let healthContext, !healthContext.isEmpty else { return persona }
+        return persona + "\n\n" + """
+        You also have a rough sense of the user's recent health patterns: \(healthContext) \
+        Only bring this up if it fits naturally in the conversation — never lead with it, and \
+        never recite the raw numbers unless the user actually asks for specifics.
+        """
+    }
+
+    static func chatTurns(from messages: [Message], healthContext: String? = nil) -> [ChatTurn] {
+        [ChatTurn(role: "system", content: systemPrompt(healthContext: healthContext))] + messages.map { message in
             ChatTurn(role: message.speaker == .user ? "user" : "assistant", content: message.text)
         }
     }

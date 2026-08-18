@@ -48,6 +48,8 @@ tests:
 | `SpeechSynthesizer` | `AVSpeechSynthesizerAdapter` | Text-to-speech |
 | `AIConversationService` | (pluggable — see below) | LLM chat / streaming responses |
 | `ConversationStore` | `SwiftDataConversationStore` | Local persistence |
+| `HealthDataProvider` | `HealthKitDataProvider` | Recent HealthKit metrics (steps, heart rate, sleep) |
+| `TimelineStore` | `SwiftDataTimelineStore` | Local persistence for the shared timeline |
 
 No AI or voice provider has been locked in yet. `AIConversationService` and
 `SpeechRecognizer`/`SpeechSynthesizer` are deliberately provider-agnostic —
@@ -96,6 +98,17 @@ previews and tests.
 `SwiftData` is used for local conversation history (`Core/Persistence`) —
 first-party, no dependency, and it integrates cleanly with `@Observable`
 query results.
+
+Alongside conversation history, `Core/Persistence` holds the **unified
+timeline** (`TimelineEvent`/`TimelineStore`): a generic
+timestamp/type/payload shape that any external data source normalizes
+into, so Ghost can reference it in conversation. HealthKit
+(`Core/Health`) is the first source; `ConversationViewModel.start()`
+syncs recent metrics onto it and summarizes them (see
+`HealthTimelineSummarizer`) into a short natural-language note folded
+into the system prompt via `PromptBuilder`. A future data source (e.g.
+calendar) plugs in the same way: a `Core/<Source>` normalizer that writes
+`TimelineEvent`s, no changes to persistence itself.
 
 ### Design system
 

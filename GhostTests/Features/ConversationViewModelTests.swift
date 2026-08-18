@@ -13,7 +13,9 @@ struct ConversationViewModelTests {
             voiceEngine: voiceEngine,
             aiConversationService: aiService,
             conversationStore: store,
-            preferences: InMemoryUserPreferencesStore()
+            preferences: InMemoryUserPreferencesStore(),
+            healthDataProvider: MockHealthDataProvider(),
+            timelineStore: InMemoryTimelineStore()
         )
 
         viewModel.micTapped()
@@ -27,6 +29,60 @@ struct ConversationViewModelTests {
     }
 
     @Test
+    func startSyncsHealthDataAndMicTappedPassesItToTheAIService() async throws {
+        var requestWasMade = false
+        var capturedHealthContext: String?
+        let aiService = MockAIConversationService(reply: "noted") { context in
+            requestWasMade = true
+            capturedHealthContext = context
+        }
+        let viewModel = ConversationViewModel(
+            voiceEngine: MockVoiceEngine(),
+            aiConversationService: aiService,
+            conversationStore: InMemoryConversationStore(),
+            preferences: InMemoryUserPreferencesStore(),
+            healthDataProvider: MockHealthDataProvider(),
+            timelineStore: InMemoryTimelineStore()
+        )
+
+        await viewModel.start()
+        viewModel.micTapped()
+
+        try await waitUntil { viewModel.orbState == .idle }
+
+        #expect(requestWasMade)
+        #expect(capturedHealthContext?.contains("steps") == true)
+    }
+
+    @Test
+    func startLeavesHealthContextNilWhenPermissionIsDenied() async throws {
+        let healthProvider = MockHealthDataProvider()
+        healthProvider.authorizationStatusToReturn = .denied
+        var requestWasMade = false
+        var capturedHealthContext: String?
+        let aiService = MockAIConversationService(reply: "noted") { context in
+            requestWasMade = true
+            capturedHealthContext = context
+        }
+        let viewModel = ConversationViewModel(
+            voiceEngine: MockVoiceEngine(),
+            aiConversationService: aiService,
+            conversationStore: InMemoryConversationStore(),
+            preferences: InMemoryUserPreferencesStore(),
+            healthDataProvider: healthProvider,
+            timelineStore: InMemoryTimelineStore()
+        )
+
+        await viewModel.start()
+        viewModel.micTapped()
+
+        try await waitUntil { viewModel.orbState == .idle }
+
+        #expect(requestWasMade)
+        #expect(capturedHealthContext == nil)
+    }
+
+    @Test
     func micTappedWhileSpeakingInterruptsWhenEnabled() async throws {
         let voiceEngine = MockVoiceEngine()
         voiceEngine.holdSpeakUntilStopped = true
@@ -34,7 +90,9 @@ struct ConversationViewModelTests {
             voiceEngine: voiceEngine,
             aiConversationService: MockAIConversationService(reply: "hi there"),
             conversationStore: InMemoryConversationStore(),
-            preferences: InMemoryUserPreferencesStore(isVoiceInterruptionEnabled: true)
+            preferences: InMemoryUserPreferencesStore(isVoiceInterruptionEnabled: true),
+            healthDataProvider: MockHealthDataProvider(),
+            timelineStore: InMemoryTimelineStore()
         )
 
         viewModel.micTapped()
@@ -54,7 +112,9 @@ struct ConversationViewModelTests {
             voiceEngine: voiceEngine,
             aiConversationService: MockAIConversationService(reply: "hi there"),
             conversationStore: InMemoryConversationStore(),
-            preferences: InMemoryUserPreferencesStore(isVoiceInterruptionEnabled: false)
+            preferences: InMemoryUserPreferencesStore(isVoiceInterruptionEnabled: false),
+            healthDataProvider: MockHealthDataProvider(),
+            timelineStore: InMemoryTimelineStore()
         )
 
         viewModel.micTapped()

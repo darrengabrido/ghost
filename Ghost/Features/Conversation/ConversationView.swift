@@ -29,6 +29,7 @@ struct ConversationView: View {
             }
             .padding(.top, Theme.Spacing.lg)
         }
+        .task { await viewModel.start() }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {

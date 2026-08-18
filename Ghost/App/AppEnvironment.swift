@@ -14,6 +14,8 @@ struct AppEnvironment {
     let conversationStore: ConversationStore
     let userPreferences: UserPreferencesStore
     let apiKeyStore: APIKeyStore
+    let healthDataProvider: HealthDataProvider
+    let timelineStore: TimelineStore
 
     static func live() -> AppEnvironment {
         let userPreferences = UserDefaultsPreferencesStore()
@@ -32,7 +34,9 @@ struct AppEnvironment {
             aiConversationService: aiConversationService,
             conversationStore: SwiftDataConversationStore(),
             userPreferences: userPreferences,
-            apiKeyStore: apiKeyStore
+            apiKeyStore: apiKeyStore,
+            healthDataProvider: HealthKitDataProvider(),
+            timelineStore: SwiftDataTimelineStore()
         )
     }
 
@@ -43,7 +47,9 @@ struct AppEnvironment {
             aiConversationService: MockAIConversationService(),
             conversationStore: InMemoryConversationStore(),
             userPreferences: userPreferences,
-            apiKeyStore: InMemoryAPIKeyStore()
+            apiKeyStore: InMemoryAPIKeyStore(),
+            healthDataProvider: MockHealthDataProvider(),
+            timelineStore: InMemoryTimelineStore()
         )
     }
 }

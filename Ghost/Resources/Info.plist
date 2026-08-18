@@ -24,6 +24,8 @@
 	<string>$(GHOST_AI_API_KEY)</string>
 	<key>GhostAPIBaseURL</key>
 	<string>$(GHOST_API_BASE_URL)</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Ghost reads recent activity, heart rate, and sleep so it can notice real patterns and bring them up naturally in conversation — never without your permission.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Ghost listens when you speak to it — your voice never leaves your conversation with it without your say-so.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
