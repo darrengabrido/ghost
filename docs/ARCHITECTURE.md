@@ -44,7 +44,7 @@ tests:
 
 | Protocol | Production implementation | Purpose |
 |---|---|---|
-| `SpeechRecognizer` | `SFSpeechRecognizerAdapter` | Speech-to-text |
+| `SpeechRecognizer` | `SFSpeechRecognizerAdapter` | Speech-to-text (bridges to `TranscriptionService`) |
 | `SpeechSynthesizer` | `AVSpeechSynthesizerAdapter` | Text-to-speech |
 | `AIConversationService` | (pluggable — see below) | LLM chat / streaming responses |
 | `ConversationStore` | `SwiftDataConversationStore` | Local persistence |
@@ -54,6 +54,33 @@ No AI or voice provider has been locked in yet. `AIConversationService` and
 swapping in OpenAI's Realtime API, ElevenLabs, Whisper, or a fully on-device
 pipeline should mean writing one new adapter file and updating
 `AppEnvironment`, not touching any View or ViewModel.
+
+### Transcription pipeline
+
+`Core/Voice/Transcription/` holds the voice-to-text pipeline as three
+independently swappable pieces, composed by `DefaultTranscriptionService`:
+
+| Protocol | Production implementation | Purpose |
+|---|---|---|
+| `AudioCapture` | `MicrophoneAudioCapture` | Mic → `AVAudioPCMBuffer` stream (`AVAudioEngine`) |
+| `TranscriptionProvider` | `AppleSpeechTranscriptionProvider` | Audio buffers → raw transcript text (on-device `Speech` framework) |
+| — | `TranscriptCleaner` | Raw text → clean text (whitespace, filler words, capitalization) |
+
+`AudioCapture` and `TranscriptionProvider` don't know about each other —
+capture only knows about producing buffers, the provider only knows about
+turning audio into text — so either swaps independently: a file-based
+`AudioCapture` for batch/offline transcription, or a server-based
+`TranscriptionProvider` (Whisper, Deepgram, ...) for higher accuracy,
+without touching the other piece or `TranscriptionService` itself.
+`TranscriptCleaner` is a pure function so its rules can evolve without
+touching capture or recognition at all.
+
+`SFSpeechRecognizerAdapter` (the `SpeechRecognizer` implementation
+`VoiceEngine` depends on) is a thin bridge: it owns a
+`TranscriptionService` and translates its `.partial`/`.final` text events
+into `VoiceEvent`, forwarding captured audio levels as `.amplitude`. That
+keeps `VoiceEngine`, `ConversationViewModel`, and the waveform UI
+completely unaware that the transcription pipeline underneath changed.
 
 ### Composition root
 
