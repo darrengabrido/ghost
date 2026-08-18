@@ -7,8 +7,10 @@ atmospheric aesthetic: it should feel less like "an app with a
 chatbot" and more like something present in the room with you.
 
 > This repository is a from-scratch, production-ready starting point —
-> architecture, folder structure, and design system are in place; the
-> actual voice/AI provider integrations are intentionally left pluggable.
+> architecture, folder structure, and design system are in place, with a
+> live Anthropic + on-device Speech integration. Every provider is behind
+> a protocol, so swapping or adding one is one adapter file, not a
+> rewrite.
 
 ## Features (planned)
 

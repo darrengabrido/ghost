@@ -4,9 +4,10 @@ import Foundation
 /// tokens as they arrive so the UI (and eventually speech synthesis) can
 /// start reacting before the full reply is generated.
 ///
-/// No provider is wired in yet — implement this against whichever LLM API
-/// you choose (OpenAI, Anthropic, a self-hosted model, ...) and construct
-/// it in `AppEnvironment.live()`.
+/// `AnthropicAIConversationService` is the live default, used by
+/// `AppEnvironment.live()` whenever an API key is configured. Add another
+/// adapter (OpenAI, a self-hosted model, ...) the same way to make the
+/// provider swappable at runtime.
 protocol AIConversationService {
     /// - Parameter healthContext: a short natural-language summary of the
     ///   user's recent health patterns (see `HealthTimelineSummarizer`), or
@@ -21,10 +22,11 @@ extension AIConversationService {
     }
 }
 
-/// Placeholder used until a real provider is configured, so the app is
-/// runnable out of the box instead of crashing. Replace `AppEnvironment
-/// .live()`'s `aiConversationService` with a real adapter (built on
-/// `APIClient` + `PromptBuilder`) when you pick a provider.
+/// Fallback used when no API key is configured, so the app is runnable out
+/// of the box instead of crashing. `AppEnvironment.live()` falls back to
+/// this only when constructing `APIClient` fails (no key in
+/// `Secrets.xcconfig` / Keychain); once a key is set, `AnthropicAIConversationService`
+/// is used instead.
 struct UnconfiguredAIConversationService: AIConversationService {
     func streamResponse(to messages: [Message], healthContext: String?) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { continuation in

@@ -51,11 +51,13 @@ tests:
 | `HealthDataProvider` | `HealthKitDataProvider` | Recent HealthKit metrics (steps, heart rate, sleep) |
 | `TimelineStore` | `SwiftDataTimelineStore` | Local persistence for the shared timeline |
 
-No AI or voice provider has been locked in yet. `AIConversationService` and
-`SpeechRecognizer`/`SpeechSynthesizer` are deliberately provider-agnostic —
-swapping in OpenAI's Realtime API, ElevenLabs, Whisper, or a fully on-device
-pipeline should mean writing one new adapter file and updating
-`AppEnvironment`, not touching any View or ViewModel.
+`AnthropicAIConversationService` and the on-device `Speech`/`AVSpeechSynthesizer`
+adapters are the live defaults (wired in `AppEnvironment.live()`), but
+`AIConversationService` and `SpeechRecognizer`/`SpeechSynthesizer` are
+deliberately provider-agnostic — swapping in OpenAI's Realtime API,
+ElevenLabs, Whisper, or a fully on-device pipeline should mean writing one
+new adapter file and updating `AppEnvironment`, not touching any View or
+ViewModel.
 
 ### Transcription pipeline
 
