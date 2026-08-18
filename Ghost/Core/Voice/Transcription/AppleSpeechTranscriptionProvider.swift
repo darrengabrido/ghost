@@ -31,7 +31,7 @@ final class AppleSpeechTranscriptionProvider: TranscriptionProvider, @unchecked 
     }
 
     func transcribe(
-        _ audio: AsyncThrowingStream<AVAudioPCMBuffer, Error>
+        _ audio: AsyncThrowingStream<CapturedAudioBuffer, Error>
     ) -> AsyncThrowingStream<RawTranscriptEvent, Error> {
         AsyncThrowingStream { continuation in
             let feedTask = Task {
@@ -72,8 +72,8 @@ final class AppleSpeechTranscriptionProvider: TranscriptionProvider, @unchecked 
                 stateLock.withLock { self.recognitionTask = task }
 
                 do {
-                    for try await buffer in audio {
-                        request.append(buffer)
+                    for try await captured in audio {
+                        request.append(captured.buffer)
                     }
                     request.endAudio()
                 } catch {

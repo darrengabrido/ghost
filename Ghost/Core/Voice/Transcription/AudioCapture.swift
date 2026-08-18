@@ -12,10 +12,23 @@ protocol AudioCapture: Sendable {
     /// implementations never need to know it exists.
     func startCapturing(
         onLevel: @escaping @Sendable ([CGFloat]) -> Void
-    ) -> AsyncThrowingStream<AVAudioPCMBuffer, Error>
+    ) -> AsyncThrowingStream<CapturedAudioBuffer, Error>
 
     /// Stops capturing and tears down any underlying engine/tap.
     func stop()
+}
+
+/// A `Sendable` wrapper around a captured audio buffer. `AVAudioPCMBuffer`
+/// itself isn't `Sendable` — it's a mutable class, and CoreAudio's own
+/// buffers can be reused/rewritten across threads — so the Swift 6
+/// concurrency checker won't let one cross into a `Task` or be consumed on
+/// another task, even a freshly copied one it can't prove is unaliased.
+/// `AudioCapture` implementations are expected to hand over only buffers
+/// they've deep-copied and no longer touch themselves (see
+/// `MicrophoneAudioCapture`), which makes wrapping them here safe by
+/// construction rather than a blind suppression.
+struct CapturedAudioBuffer: @unchecked Sendable {
+    let buffer: AVAudioPCMBuffer
 }
 
 /// Default `AudioCapture` using `AVAudioEngine` to tap the device
@@ -33,7 +46,7 @@ final class MicrophoneAudioCapture: AudioCapture, @unchecked Sendable {
 
     func startCapturing(
         onLevel: @escaping @Sendable ([CGFloat]) -> Void
-    ) -> AsyncThrowingStream<AVAudioPCMBuffer, Error> {
+    ) -> AsyncThrowingStream<CapturedAudioBuffer, Error> {
         AsyncThrowingStream { continuation in
             let inputNode = audioEngine.inputNode
             let format = inputNode.outputFormat(forBus: 0)
@@ -46,7 +59,7 @@ final class MicrophoneAudioCapture: AudioCapture, @unchecked Sendable {
                 // the original off to `continuation` for consumption on
                 // another task — only a buffer nothing else can touch is.
                 if let copy = buffer.copy() {
-                    continuation.yield(copy)
+                    continuation.yield(CapturedAudioBuffer(buffer: copy))
                 }
             }
 

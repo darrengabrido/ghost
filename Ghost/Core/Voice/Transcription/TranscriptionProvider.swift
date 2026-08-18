@@ -22,6 +22,6 @@ enum RawTranscriptEvent: Sendable {
 /// or when cancelled.
 protocol TranscriptionProvider: Sendable {
     func transcribe(
-        _ audio: AsyncThrowingStream<AVAudioPCMBuffer, Error>
+        _ audio: AsyncThrowingStream<CapturedAudioBuffer, Error>
     ) -> AsyncThrowingStream<RawTranscriptEvent, Error>
 }

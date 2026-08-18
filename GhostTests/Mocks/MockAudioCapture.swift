@@ -11,7 +11,7 @@ final class MockAudioCapture: AudioCapture, @unchecked Sendable {
 
     func startCapturing(
         onLevel: @escaping @Sendable ([CGFloat]) -> Void
-    ) -> AsyncThrowingStream<AVAudioPCMBuffer, Error> {
+    ) -> AsyncThrowingStream<CapturedAudioBuffer, Error> {
         AsyncThrowingStream { continuation in
             for levels in levelsToReport {
                 onLevel(levels)

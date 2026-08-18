@@ -8,7 +8,7 @@ final class MockTranscriptionProvider: TranscriptionProvider, @unchecked Sendabl
     var eventsToEmit: [RawTranscriptEvent] = [.final("test utterance")]
 
     func transcribe(
-        _ audio: AsyncThrowingStream<AVAudioPCMBuffer, Error>
+        _ audio: AsyncThrowingStream<CapturedAudioBuffer, Error>
     ) -> AsyncThrowingStream<RawTranscriptEvent, Error> {
         AsyncThrowingStream { continuation in
             for event in eventsToEmit {
