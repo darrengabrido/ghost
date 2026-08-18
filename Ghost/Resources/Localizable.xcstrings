@@ -51,6 +51,26 @@
         }
       }
     },
+    "history.noResults" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No conversations match your search."
+          }
+        }
+      }
+    },
+    "history.search.prompt" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search conversations"
+          }
+        }
+      }
+    },
     "history.title" : {
       "localizations" : {
         "en" : {
