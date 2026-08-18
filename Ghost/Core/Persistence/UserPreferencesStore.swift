@@ -8,6 +8,13 @@ protocol UserPreferencesStore: AnyObject {
     var isVoiceInterruptionEnabled: Bool { get set }
     var voiceIdentifier: String { get set }
     var selectedAIProvider: AIProvider { get set }
+
+    /// The model chosen for `provider`, or `provider.defaultModel` if none
+    /// has been picked yet. Kept per-provider (rather than a single
+    /// current value) so switching providers in Settings doesn't lose
+    /// whatever model was picked for the previous one.
+    func selectedModel(for provider: AIProvider) -> String
+    func setSelectedModel(_ model: String, for provider: AIProvider)
 }
 
 @Observable
@@ -53,6 +60,14 @@ final class UserDefaultsPreferencesStore: UserPreferencesStore {
         selectedAIProvider = defaults.string(forKey: AIProvider.preferencesKey)
             .flatMap(AIProvider.init(rawValue:)) ?? .anthropic
     }
+
+    func selectedModel(for provider: AIProvider) -> String {
+        defaults.string(forKey: provider.modelPreferencesKey) ?? provider.defaultModel
+    }
+
+    func setSelectedModel(_ model: String, for provider: AIProvider) {
+        defaults.set(model, forKey: provider.modelPreferencesKey)
+    }
 }
 
 @Observable
@@ -62,6 +77,7 @@ final class InMemoryUserPreferencesStore: UserPreferencesStore {
     var isVoiceInterruptionEnabled: Bool
     var voiceIdentifier: String
     var selectedAIProvider: AIProvider
+    private var models: [AIProvider: String] = [:]
 
     init(
         speechRate: Double = 0.5,
@@ -73,5 +89,13 @@ final class InMemoryUserPreferencesStore: UserPreferencesStore {
         self.isVoiceInterruptionEnabled = isVoiceInterruptionEnabled
         self.voiceIdentifier = voiceIdentifier
         self.selectedAIProvider = selectedAIProvider
+    }
+
+    func selectedModel(for provider: AIProvider) -> String {
+        models[provider] ?? provider.defaultModel
+    }
+
+    func setSelectedModel(_ model: String, for provider: AIProvider) {
+        models[provider] = model
     }
 }

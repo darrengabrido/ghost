@@ -54,12 +54,18 @@ tests:
 `AIConversationService` ships four adapters — `AnthropicAIConversationService`,
 `OpenAIAIConversationService`, `GrokAIConversationService`, and
 `GeminiAIConversationService` — selected per `AIProvider` case. The user
-picks one (and saves its key) in Settings; `RoutingAIConversationService`
-(the instance `AppEnvironment.live()` actually hands out) reads that
-selection fresh on every request via `AppEnvironment.makeAIConversationService(provider:apiKeyStore:)`,
-so switching providers or saving a new key applies to the next message
-without relaunching. `APIKeyStore` keeps a separate Keychain entry per
-provider. Adding a fifth provider (ElevenLabs for voice, a self-hosted
+picks one (and saves its key) in Settings, plus a model — either from
+`AIProvider.availableModels`'s short curated list or any free-text model
+ID the provider supports, defaulting to `AIProvider.defaultModel`.
+`RoutingAIConversationService` (the instance `AppEnvironment.live()`
+actually hands out) reads both selections fresh on every request via
+`AppEnvironment.makeAIConversationService(provider:model:apiKeyStore:)`,
+so switching providers, picking a different model, or saving a new key
+applies to the next message without relaunching. `APIKeyStore` keeps a
+separate Keychain entry per provider (model choice isn't sensitive, so it
+lives in `UserPreferencesStore`/`UserDefaults` instead, one entry per
+provider so switching providers doesn't lose the other's pick). Adding a
+fifth provider (ElevenLabs for voice, a self-hosted
 model, ...) means one new adapter file, an `AIProvider` case, and a switch
 arm — not touching any View or ViewModel. `SpeechRecognizer`/`SpeechSynthesizer`
 remain single-adapter today (on-device `Speech`/`AVSpeechSynthesizer`) but

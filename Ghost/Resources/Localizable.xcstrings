@@ -164,6 +164,46 @@
         }
       }
     },
+    "settings.api.model" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Model"
+          }
+        }
+      }
+    },
+    "settings.api.model.custom.hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Or type any other model ID this provider supports."
+          }
+        }
+      }
+    },
+    "settings.api.model.custom.save" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use this model"
+          }
+        }
+      }
+    },
+    "settings.api.model.picker.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Model"
+          }
+        }
+      }
+    },
     "settings.api.provider" : {
       "localizations" : {
         "en" : {

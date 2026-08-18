@@ -8,14 +8,12 @@ import Foundation
 /// `[DONE]` sentinel, roles are "user"/"model", the system prompt is a
 /// separate `systemInstruction` field), so it isn't shared with them.
 struct GeminiAIConversationService: AIConversationService {
-    // Swap this if Google ships a newer flagship model by the time you're
-    // reading this — there's no way to discover it at runtime.
-    private static let model = "gemini-2.5-pro"
-
     private let client: APIClient
+    private let model: String
 
-    init(client: APIClient) {
+    init(client: APIClient, model: String) {
         self.client = client
+        self.model = model
     }
 
     func streamResponse(to messages: [Message], healthContext: String?) -> AsyncThrowingStream<String, Error> {
@@ -64,7 +62,7 @@ struct GeminiAIConversationService: AIConversationService {
         )
 
         return Endpoint(
-            path: "/v1beta/models/\(Self.model):streamGenerateContent",
+            path: "/v1beta/models/\(model):streamGenerateContent",
             method: "POST",
             headers: [
                 "content-type": "application/json",

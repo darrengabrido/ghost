@@ -27,9 +27,14 @@ final class SettingsViewModel {
             guard oldValue != selectedProvider else { return }
             preferences.selectedAIProvider = selectedProvider
             draftAPIKey = ""
+            selectedModel = preferences.selectedModel(for: selectedProvider)
+            draftModel = ""
             refreshKeychainStatus()
         }
     }
+
+    private(set) var selectedModel: String
+    var draftModel = ""
 
     var draftAPIKey = ""
     var errorMessage: String?
@@ -89,7 +94,16 @@ final class SettingsViewModel {
         isVoiceInterruptionEnabled = preferences.isVoiceInterruptionEnabled
         voiceIdentifier = preferences.voiceIdentifier
         selectedProvider = preferences.selectedAIProvider
+        selectedModel = preferences.selectedModel(for: preferences.selectedAIProvider)
         refreshKeychainStatus()
+    }
+
+    func selectModel(_ model: String) {
+        let trimmed = model.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        selectedModel = trimmed
+        preferences.setSelectedModel(trimmed, for: selectedProvider)
+        draftModel = ""
     }
 
     func saveAPIKey() {

@@ -38,4 +38,37 @@ enum AIProvider: String, CaseIterable, Identifiable, Sendable {
     /// (rather than through the `@MainActor`-isolated preferences store)
     /// since `AIConversationService` isn't main-actor-isolated.
     static let preferencesKey = "ghost.preferences.selectedAIProvider"
+
+    /// UserDefaults key backing this provider's chosen model (see
+    /// `UserPreferencesStore.selectedModel(for:)`), read the same
+    /// direct-from-UserDefaults way `preferencesKey` is.
+    var modelPreferencesKey: String {
+        "ghost.preferences.selectedModel.\(rawValue)"
+    }
+
+    /// Used whenever the user hasn't picked a model for this provider yet.
+    /// Swap these if a provider ships a newer flagship by the time you're
+    /// reading this — there's no way to discover the current lineup at
+    /// runtime, and Settings only offers `availableModels` plus a free-text
+    /// override, not live discovery.
+    var defaultModel: String {
+        switch self {
+        case .anthropic: "claude-sonnet-5"
+        case .openAI: "gpt-5"
+        case .grok: "grok-4"
+        case .gemini: "gemini-2.5-pro"
+        }
+    }
+
+    /// A short curated list for the Settings model picker — not
+    /// exhaustive. `AIModelPickerView` also offers a free-text field for
+    /// any other model ID the provider supports.
+    var availableModels: [String] {
+        switch self {
+        case .anthropic: ["claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5-20251001"]
+        case .openAI: ["gpt-5", "gpt-5-mini"]
+        case .grok: ["grok-4", "grok-4-fast"]
+        case .gemini: ["gemini-2.5-pro", "gemini-2.5-flash"]
+        }
+    }
 }

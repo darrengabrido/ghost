@@ -5,14 +5,12 @@ import Foundation
 /// transport and `PromptBuilder` for turning `Message` history and Ghost's
 /// persona into a request body.
 struct OpenAIAIConversationService: AIConversationService {
-    // Swap this if OpenAI ships a newer flagship model by the time you're
-    // reading this — there's no way to discover it at runtime.
-    private static let model = "gpt-5"
-
     private let client: APIClient
+    private let model: String
 
-    init(client: APIClient) {
+    init(client: APIClient, model: String) {
         self.client = client
+        self.model = model
     }
 
     func streamResponse(to messages: [Message], healthContext: String?) -> AsyncThrowingStream<String, Error> {
@@ -52,7 +50,7 @@ struct OpenAIAIConversationService: AIConversationService {
         let turns = PromptBuilder.chatTurns(from: messages, healthContext: healthContext)
             .map { RequestBody.Turn(role: $0.role, content: $0.content) }
 
-        let body = RequestBody(model: Self.model, stream: true, messages: turns)
+        let body = RequestBody(model: model, stream: true, messages: turns)
 
         return Endpoint(
             path: "/v1/chat/completions",

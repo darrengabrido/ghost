@@ -126,6 +126,14 @@ struct SettingsView: View {
 
                     settingsDivider
 
+                    NavigationLink {
+                        AIModelPickerView(viewModel: viewModel)
+                    } label: {
+                        modelRow
+                    }
+
+                    settingsDivider
+
                     apiStatusCapsule
 
                     Text("settings.api.hint")
@@ -171,6 +179,14 @@ struct SettingsView: View {
             systemImage: "cpu",
             title: "settings.api.provider",
             subtitle: viewModel.selectedProvider.displayName
+        )
+    }
+
+    private var modelRow: some View {
+        SettingsIdentityRow(
+            systemImage: "sparkles",
+            title: "settings.api.model",
+            subtitle: viewModel.selectedModel
         )
     }
 

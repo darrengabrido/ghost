@@ -5,14 +5,15 @@ import Foundation
 /// transport and `PromptBuilder` for turning `Message` history and Ghost's
 /// persona into a request body.
 struct AnthropicAIConversationService: AIConversationService {
-    private static let model = "claude-sonnet-5"
     private static let anthropicVersion = "2023-06-01"
     private static let maxTokens = 1024
 
     private let client: APIClient
+    private let model: String
 
-    init(client: APIClient) {
+    init(client: APIClient, model: String) {
         self.client = client
+        self.model = model
     }
 
     func streamResponse(to messages: [Message], healthContext: String?) -> AsyncThrowingStream<String, Error> {
@@ -62,7 +63,7 @@ struct AnthropicAIConversationService: AIConversationService {
             .map { RequestBody.Turn(role: $0.role, content: $0.content) }
 
         let body = RequestBody(
-            model: Self.model,
+            model: model,
             maxTokens: Self.maxTokens,
             system: PromptBuilder.systemPrompt(healthContext: healthContext),
             stream: true,
