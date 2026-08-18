@@ -50,15 +50,11 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full rationale.
 git clone <your-fork-or-repo-url>.git
 cd ghost
 
-# Generate the Xcode project (Ghost.xcodeproj is gitignored — always regenerate)
-xcodegen generate
-# or: make generate
-
-# Provide local secrets (never commit the real file)
-cp Ghost/Resources/Config/Secrets.xcconfig.example Ghost/Resources/Config/Secrets.xcconfig
-# then edit Secrets.xcconfig with your API keys
-
-open Ghost.xcodeproj
+# One-shot setup: checks Xcode/XcodeGen/SwiftLint, creates Secrets.xcconfig
+# from the template, and generates Ghost.xcodeproj (macOS only — see
+# docs/DEV_ENVIRONMENT.md for Claude Code on the web / other Linux sessions)
+scripts/setup.sh --open
+# then edit Ghost/Resources/Config/Secrets.xcconfig with your real API keys
 ```
 
 Build and run on a **physical device** for anything voice-related —
@@ -109,6 +105,10 @@ docs/             # Architecture and contribution docs
   root — no DI framework.
 
 Full details: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+See [`docs/DEV_ENVIRONMENT.md`](docs/DEV_ENVIRONMENT.md) for the full setup
+story, including what a non-macOS session (e.g. Claude Code on the web) can
+and can't do.
 
 ## Configuration & secrets
 
