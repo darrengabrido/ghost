@@ -34,7 +34,7 @@ struct DefaultTranscriptionServiceTests {
         provider.eventsToEmit = [.final("hi")]
         let service = DefaultTranscriptionService(audioCapture: audioCapture, provider: provider)
 
-        var reportedLevels: [[CGFloat]] = []
+        nonisolated(unsafe) var reportedLevels: [[CGFloat]] = []
         for try await _ in service.startTranscribing(onLevel: { reportedLevels.append($0) }) {}
 
         #expect(reportedLevels == [[0.5, 0.6]])
