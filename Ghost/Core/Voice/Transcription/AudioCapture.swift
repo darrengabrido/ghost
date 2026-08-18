@@ -41,7 +41,13 @@ final class MicrophoneAudioCapture: AudioCapture, @unchecked Sendable {
             // queue — only touch thread-safe/local state in here.
             inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in
                 onLevel(VoiceActivityDetector.amplitudeLevels(from: buffer))
-                continuation.yield(buffer)
+                // CoreAudio owns `buffer` and may reuse/overwrite it the
+                // instant this callback returns, so it isn't safe to hand
+                // the original off to `continuation` for consumption on
+                // another task — only a buffer nothing else can touch is.
+                if let copy = buffer.copy() {
+                    continuation.yield(copy)
+                }
             }
 
             do {
@@ -61,5 +67,26 @@ final class MicrophoneAudioCapture: AudioCapture, @unchecked Sendable {
     func stop() {
         audioEngine.stop()
         audioEngine.inputNode.removeTap(onBus: 0)
+    }
+}
+
+private extension AVAudioPCMBuffer {
+    /// A deep copy of this buffer's audio data. `nil` only if allocation
+    /// fails (e.g. out of memory).
+    func copy() -> AVAudioPCMBuffer? {
+        guard let copy = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCapacity) else {
+            return nil
+        }
+        copy.frameLength = frameLength
+
+        let source = UnsafeMutableAudioBufferListPointer(mutableAudioBufferList)
+        let destination = UnsafeMutableAudioBufferListPointer(copy.mutableAudioBufferList)
+        for (sourceBuffer, destinationBuffer) in zip(source, destination) {
+            guard let sourceData = sourceBuffer.mData, let destinationData = destinationBuffer.mData else { continue }
+            let byteCount = Int(sourceBuffer.mDataByteSize)
+            UnsafeMutableRawBufferPointer(start: destinationData, count: byteCount)
+                .copyMemory(from: UnsafeRawBufferPointer(start: sourceData, count: byteCount))
+        }
+        return copy
     }
 }
