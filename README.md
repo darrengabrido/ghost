@@ -21,8 +21,10 @@ chatbot" and more like something present in the room with you.
   dark, minimal canvas.
 - 🗂️ **Conversation history** — past conversations saved locally and
   searchable.
-- ⚙️ **Configurable voice & AI providers** — swap speech-to-text,
-  text-to-speech, and the underlying LLM without touching UI code.
+- ⚙️ **Configurable voice & AI providers** — pick Anthropic, OpenAI, xAI
+  Grok, or Google Gemini as the LLM right from Settings, each with its own
+  saved key; speech-to-text and text-to-speech are equally swappable
+  without touching UI code.
 - 🔒 **Privacy-conscious by default** — no analytics wired in, API keys
   never committed, microphone access explained plainly to the user.
 

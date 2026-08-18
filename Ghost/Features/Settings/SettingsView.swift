@@ -88,27 +88,11 @@ struct SettingsView: View {
     }
 
     private var voiceIdentityRow: some View {
-        HStack(spacing: Theme.Spacing.md) {
-            Image(systemName: "speaker.wave.2")
-                .font(.ghostBody)
-                .foregroundStyle(Color.ghostAccent)
-                .frame(width: 22)
-
-            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                Text("settings.voice.identity")
-                    .font(.ghostBody)
-                    .foregroundStyle(Color.ghostTextPrimary)
-                Text(viewModel.selectedVoiceName)
-                    .font(.ghostCaption)
-                    .foregroundStyle(Color.ghostTextSecondary)
-            }
-
-            Spacer()
-
-            Image(systemName: "chevron.right")
-                .font(.ghostCaption)
-                .foregroundStyle(Color.ghostTextTertiary)
-        }
+        SettingsIdentityRow(
+            systemImage: "speaker.wave.2",
+            title: "settings.voice.identity",
+            subtitle: viewModel.selectedVoiceName
+        )
         .padding(.bottom, Theme.Spacing.md)
     }
 
@@ -134,6 +118,14 @@ struct SettingsView: View {
             sectionLabel("settings.api")
             GhostGlass {
                 VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                    NavigationLink {
+                        AIProviderPickerView(viewModel: viewModel)
+                    } label: {
+                        providerRow
+                    }
+
+                    settingsDivider
+
                     apiStatusCapsule
 
                     Text("settings.api.hint")
@@ -141,7 +133,7 @@ struct SettingsView: View {
                         .foregroundStyle(Color.ghostTextSecondary)
 
                     SecureField(
-                        String(localized: "settings.api.key.placeholder"),
+                        "\(viewModel.selectedProvider.displayName) API key",
                         text: $viewModel.draftAPIKey
                     )
                     .textContentType(.password)
@@ -172,6 +164,14 @@ struct SettingsView: View {
                 .padding(Theme.Spacing.lg)
             }
         }
+    }
+
+    private var providerRow: some View {
+        SettingsIdentityRow(
+            systemImage: "cpu",
+            title: "settings.api.provider",
+            subtitle: viewModel.selectedProvider.displayName
+        )
     }
 
     private var apiStatusCapsule: some View {
@@ -260,6 +260,38 @@ struct SettingsView: View {
         case .keychain: .ghostAccent
         case .buildTime: .ghostAccentSecondary
         case .missing: .ghostTextSecondary
+        }
+    }
+}
+
+/// A "current value + chevron" row, e.g. for a `NavigationLink` into a
+/// picker screen — shared by the voice identity and AI provider rows.
+private struct SettingsIdentityRow: View {
+    let systemImage: String
+    let title: LocalizedStringKey
+    let subtitle: String
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.md) {
+            Image(systemName: systemImage)
+                .font(.ghostBody)
+                .foregroundStyle(Color.ghostAccent)
+                .frame(width: 22)
+
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                Text(title)
+                    .font(.ghostBody)
+                    .foregroundStyle(Color.ghostTextPrimary)
+                Text(subtitle)
+                    .font(.ghostCaption)
+                    .foregroundStyle(Color.ghostTextSecondary)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.ghostCaption)
+                .foregroundStyle(Color.ghostTextTertiary)
         }
     }
 }

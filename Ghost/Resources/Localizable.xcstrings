@@ -159,17 +159,27 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A key saved here is stored in the Keychain and used instead of the build-time Secrets.xcconfig value."
+            "value" : "Ghost keeps a separate key per provider, stored in the Keychain. For Anthropic, a saved key is used instead of the build-time Secrets.xcconfig value."
           }
         }
       }
     },
-    "settings.api.key.placeholder" : {
+    "settings.api.provider" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Anthropic API key"
+            "value" : "AI provider"
+          }
+        }
+      }
+    },
+    "settings.api.provider.picker.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI Provider"
           }
         }
       }

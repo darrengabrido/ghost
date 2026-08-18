@@ -7,6 +7,7 @@ protocol UserPreferencesStore: AnyObject {
     var speechRate: Double { get set }
     var isVoiceInterruptionEnabled: Bool { get set }
     var voiceIdentifier: String { get set }
+    var selectedAIProvider: AIProvider { get set }
 }
 
 @Observable
@@ -30,6 +31,10 @@ final class UserDefaultsPreferencesStore: UserPreferencesStore {
         didSet { defaults.set(voiceIdentifier, forKey: Key.voiceIdentifier) }
     }
 
+    var selectedAIProvider: AIProvider {
+        didSet { defaults.set(selectedAIProvider.rawValue, forKey: AIProvider.preferencesKey) }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -45,6 +50,8 @@ final class UserDefaultsPreferencesStore: UserPreferencesStore {
             isVoiceInterruptionEnabled = defaults.bool(forKey: Key.interruption)
         }
         voiceIdentifier = defaults.string(forKey: Key.voiceIdentifier) ?? ""
+        selectedAIProvider = defaults.string(forKey: AIProvider.preferencesKey)
+            .flatMap(AIProvider.init(rawValue:)) ?? .anthropic
     }
 }
 
@@ -54,14 +61,17 @@ final class InMemoryUserPreferencesStore: UserPreferencesStore {
     var speechRate: Double
     var isVoiceInterruptionEnabled: Bool
     var voiceIdentifier: String
+    var selectedAIProvider: AIProvider
 
     init(
         speechRate: Double = 0.5,
         isVoiceInterruptionEnabled: Bool = true,
-        voiceIdentifier: String = ""
+        voiceIdentifier: String = "",
+        selectedAIProvider: AIProvider = .anthropic
     ) {
         self.speechRate = speechRate
         self.isVoiceInterruptionEnabled = isVoiceInterruptionEnabled
         self.voiceIdentifier = voiceIdentifier
+        self.selectedAIProvider = selectedAIProvider
     }
 }

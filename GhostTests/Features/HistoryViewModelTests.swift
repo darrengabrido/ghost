@@ -1,5 +1,5 @@
-@testable import Ghost
 import Foundation
+@testable import Ghost
 import Testing
 
 @MainActor
@@ -10,7 +10,7 @@ struct HistoryViewModelTests {
         store.recordsToReturn = [
             ConversationRecord(title: "Morning run recap", transcript: "You: how far did I go\nGhost: 5k"),
             ConversationRecord(title: "Dinner plans", transcript: "You: what should I cook\nGhost: pasta"),
-            ConversationRecord(title: "Late night", transcript: "You: tell me about the RUN streak\nGhost: nice"),
+            ConversationRecord(title: "Late night", transcript: "You: tell me about the RUN streak\nGhost: nice")
         ]
 
         let viewModel = HistoryViewModel(conversationStore: store)

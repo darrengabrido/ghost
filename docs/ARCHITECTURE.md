@@ -51,13 +51,19 @@ tests:
 | `HealthDataProvider` | `HealthKitDataProvider` | Recent HealthKit metrics (steps, heart rate, sleep) |
 | `TimelineStore` | `SwiftDataTimelineStore` | Local persistence for the shared timeline |
 
-`AnthropicAIConversationService` and the on-device `Speech`/`AVSpeechSynthesizer`
-adapters are the live defaults (wired in `AppEnvironment.live()`), but
-`AIConversationService` and `SpeechRecognizer`/`SpeechSynthesizer` are
-deliberately provider-agnostic — swapping in OpenAI's Realtime API,
-ElevenLabs, Whisper, or a fully on-device pipeline should mean writing one
-new adapter file and updating `AppEnvironment`, not touching any View or
-ViewModel.
+`AIConversationService` ships four adapters — `AnthropicAIConversationService`,
+`OpenAIAIConversationService`, `GrokAIConversationService`, and
+`GeminiAIConversationService` — selected per `AIProvider` case. The user
+picks one (and saves its key) in Settings; `RoutingAIConversationService`
+(the instance `AppEnvironment.live()` actually hands out) reads that
+selection fresh on every request via `AppEnvironment.makeAIConversationService(provider:apiKeyStore:)`,
+so switching providers or saving a new key applies to the next message
+without relaunching. `APIKeyStore` keeps a separate Keychain entry per
+provider. Adding a fifth provider (ElevenLabs for voice, a self-hosted
+model, ...) means one new adapter file, an `AIProvider` case, and a switch
+arm — not touching any View or ViewModel. `SpeechRecognizer`/`SpeechSynthesizer`
+remain single-adapter today (on-device `Speech`/`AVSpeechSynthesizer`) but
+are equally provider-agnostic by design.
 
 ### Transcription pipeline
 
