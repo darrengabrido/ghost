@@ -1,5 +1,6 @@
 import Foundation
 @testable import Ghost
+import Synchronization
 import Testing
 
 struct DefaultTranscriptionServiceTests {
@@ -34,10 +35,15 @@ struct DefaultTranscriptionServiceTests {
         provider.eventsToEmit = [.final("hi")]
         let service = DefaultTranscriptionService(audioCapture: audioCapture, provider: provider)
 
-        var reportedLevels: [[CGFloat]] = []
-        for try await _ in service.startTranscribing(onLevel: { reportedLevels.append($0) }) {}
+        // `onLevel` is `@escaping @Sendable`, so appending to a captured
+        // local is a data race that Swift 6 rejects outright. A `Mutex` keeps
+        // the collector safe without an `@unchecked Sendable` box.
+        let reportedLevels = Mutex<[[CGFloat]]>([])
+        for try await _ in service.startTranscribing(
+            onLevel: { levels in reportedLevels.withLock { $0.append(levels) } }
+        ) {}
 
-        #expect(reportedLevels == [[0.5, 0.6]])
+        #expect(reportedLevels.withLock { $0 } == [[0.5, 0.6]])
     }
 
     @Test

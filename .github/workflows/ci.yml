@@ -110,7 +110,8 @@ jobs:
             -destination "platform=iOS Simulator,name=${DEVICE_NAME}" \
             -skipMacroValidation test 2>&1 | tee "$RUNNER_TEMP/xcodebuild-test.log"; then
             echo "::group::Test failures"
-            grep -E "error:|failed|XCTAssert|Test Case .* failed" "$RUNNER_TEMP/xcodebuild-test.log" || echo "(none found)"
+            grep -E "error:|Test Case .* failed|\*\* TEST .* \*\*" "$RUNNER_TEMP/xcodebuild-test.log" \
+              | sort -u || echo "(none found)"
             echo "::endgroup::"
             exit 1
           fi
