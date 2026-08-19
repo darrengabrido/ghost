@@ -64,9 +64,18 @@ jobs:
       - name: Build
         run: |
           set -o pipefail
-          xcodebuild -project Ghost.xcodeproj -scheme Ghost \
+          # The diagnostics have to be echoed on the *failure* path. Running
+          # the grep as a following line only ever reported on success, so a
+          # broken build surfaced as "3 failures" with the two actual error
+          # lines buried in ~1000 lines of SwiftCompile noise.
+          if ! xcodebuild -project Ghost.xcodeproj -scheme Ghost \
             -destination 'generic/platform=iOS Simulator' \
-            -skipMacroValidation clean build 2>&1 | tee "$RUNNER_TEMP/xcodebuild-build.log"
+            -skipMacroValidation clean build 2>&1 | tee "$RUNNER_TEMP/xcodebuild-build.log"; then
+            echo "::group::Compiler diagnostics"
+            grep -E "error:|warning:" "$RUNNER_TEMP/xcodebuild-build.log" || echo "(no diagnostic lines found)"
+            echo "::endgroup::"
+            exit 1
+          fi
           grep -E "error:|warning:" "$RUNNER_TEMP/xcodebuild-build.log" || true
 
       - name: Test
@@ -97,9 +106,14 @@ jobs:
           set -o pipefail
           DEVICE_NAME=$(xcrun simctl list devices available -j | python3 -c "$SELECT_DEVICE")
           echo "Testing on ${DEVICE_NAME}"
-          xcodebuild -project Ghost.xcodeproj -scheme Ghost \
+          if ! xcodebuild -project Ghost.xcodeproj -scheme Ghost \
             -destination "platform=iOS Simulator,name=${DEVICE_NAME}" \
-            -skipMacroValidation test 2>&1 | tee "$RUNNER_TEMP/xcodebuild-test.log"
+            -skipMacroValidation test 2>&1 | tee "$RUNNER_TEMP/xcodebuild-test.log"; then
+            echo "::group::Test failures"
+            grep -E "error:|failed|XCTAssert|Test Case .* failed" "$RUNNER_TEMP/xcodebuild-test.log" || echo "(none found)"
+            echo "::endgroup::"
+            exit 1
+          fi
 
   lint:
     runs-on: macos-15

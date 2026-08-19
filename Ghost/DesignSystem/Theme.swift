@@ -67,4 +67,22 @@ enum Theme {
     static func hairline(_ opacity: Double = Hairline.regular) -> Color {
         Color.ghostBone.opacity(opacity)
     }
+
+    /// The directional edge light on a glass surface: bright at the
+    /// top-leading corner, extinguished at the far one, as though a single
+    /// low light sat above the frame.
+    ///
+    /// Lives here rather than on `GhostGlass` because that type is generic
+    /// over its content, and Swift does not allow static stored properties
+    /// in generic types.
+    static let hairlineGradient = LinearGradient(
+        colors: [
+            hairline(Hairline.bright),
+            hairline(Hairline.regular),
+            hairline(Hairline.faint),
+            .clear
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
 }

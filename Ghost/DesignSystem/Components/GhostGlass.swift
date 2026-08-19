@@ -51,7 +51,7 @@ struct GhostGlass<Content: View>: View {
             }
         }
         .overlay {
-            shape.strokeBorder(Self.hairline, lineWidth: 0.8)
+            shape.strokeBorder(Theme.hairlineGradient, lineWidth: 0.8)
         }
     }
 
@@ -69,18 +69,6 @@ struct GhostGlass<Content: View>: View {
         case .ember: .ghostAshEmber
         }
     }
-
-    /// Lit from the top-leading corner, extinguished at the far one.
-    private static let hairline = LinearGradient(
-        colors: [
-            Theme.hairline(Theme.Hairline.bright),
-            Theme.hairline(Theme.Hairline.regular),
-            Theme.hairline(Theme.Hairline.faint),
-            .clear
-        ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
 }
 
 /// Groups sibling glass surfaces so they share one lighting model and can

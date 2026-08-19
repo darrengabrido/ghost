@@ -17,7 +17,12 @@ import SwiftUI
 /// so the orb and the glass around it agree about where the light in this
 /// room comes from.
 struct PulsingOrb: View {
-    enum State: Equatable {
+    /// Named `Phase`, not `State`. A type named `State` nested inside a
+    /// SwiftUI `View` shadows the `@State` property wrapper for the whole
+    /// scope, so `@State private var driftAngle` stops resolving and the
+    /// compiler reports "enum 'State' cannot be used as an attribute" —
+    /// with a cascade of unrelated-looking errors behind it.
+    enum Phase: Equatable {
         case idle
         case listening
         case thinking
@@ -79,7 +84,7 @@ struct PulsingOrb: View {
         }
     }
 
-    var state: State = .idle
+    var state: Phase = .idle
     var diameter: CGFloat = 140
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
