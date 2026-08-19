@@ -53,26 +53,38 @@ Real verification for changes made in one of these sessions happens via:
 Treat code changes made in a Linux session as unverified until one of those
 two has actually run.
 
-### CI has never actually run
+### CI was broken for its entire history — read this before trusting a run
 
-Worth knowing before you rely on the first bullet: **no CI job in this
-repository has ever been assigned a runner.** Every run since the initial
-scaffold fails roughly three seconds after it is created, with
-`runner_id: 0`, an empty runner name, and no logs at all (the logs endpoint
-404s, because nothing ever started).
+Between commit `33afcdd` and this one, **no CI run in this repository ever
+produced a single job.** The cause was in the workflow file itself:
+`33afcdd` (titled, with some irony, "Unblock CI") added a `python3 - <<'PY'`
+heredoc inside a `run: |` block whose body sat at column 0. A YAML block
+scalar ends at the first line that isn't indented past its parent, so the
+heredoc terminated the block and made the whole file unparseable. GitHub
+rejected it before creating any job, which surfaces as a run that fails
+instantly with no jobs, no logs, and no error you can click on.
 
-That signature is a runner *availability* problem at the account level —
-macOS runners not enabled, or an Actions spending limit — not a fault in
-this workflow or in the code being pushed. Nothing in the repository can
-fix it; it has to be resolved in the account's Actions/billing settings.
+That is fixed here by moving the script into an `env:` block scalar, which
+is indented with the document and dedented by YAML before Python sees it.
+**Validate this file locally before pushing a change to it** — the failure
+mode is silent and costs a full round trip:
 
-The practical consequence: a green check has never been available here, and
-right now **a real Mac is the only verification that exists**. Do not read a
-failed CI run on this repo as a signal about your change until a job has
-been seen to start.
+```sh
+python3 -c "import yaml; yaml.safe_load(open('.github/workflows/ci.yml'))"
+```
 
-One related trap, since it looks identical from the outside but is *not* the
-same bug: an invalid `runs-on` label (for example `macos-26`, which this
-account does not have) causes the run to be created with **zero jobs** rather
-than with jobs that fail to start. If a run shows no jobs at all, check the
-runner label first.
+Two failure fingerprints are worth telling apart, because they look
+identical from the PR page and have nothing to do with each other:
+
+| Symptom | Cause |
+|---|---|
+| Run created, **zero jobs** | Workflow file invalid, or an unknown `runs-on` label |
+| Jobs created, `runner_id: 0`, ~3s, logs 404 | No runner was ever assigned — an account/runner-availability problem |
+
+The second was seen once, on the very first run, before the file broke. It
+has not been observable since, because nothing has got far enough to try.
+If it reappears now that the file parses, that one is an account-level
+Actions/billing setting and nothing in this repository can fix it.
+
+Until a job has actually been seen to start, treat **a real Mac as the only
+verification that exists.**
