@@ -86,14 +86,20 @@ struct PulsingOrb: View {
     @State private var driftAngle: Double = 0
 
     var body: some View {
-        ZStack {
-            Theme.glow(color: state.color, radius: diameter * 1.15, intensity: state.glow)
-
-            sphere
-        }
-        .animation(Theme.Motion.settle, value: state)
-        .accessibilityHidden(true)
-        .onAppear(perform: startDrift)
+        // The aura is a `background`, not a ZStack sibling, and that is a
+        // layout decision rather than a cosmetic one: `Theme.glow` carries an
+        // explicit frame of `radius * 2`, so as a sibling it made a 190pt orb
+        // claim 437pt of vertical space and pushed the onboarding button off
+        // short screens. As a background it draws outside the bounds without
+        // contributing to them, and the orb measures what it looks like.
+        sphere
+            .background {
+                Theme.glow(color: state.color, radius: diameter * 1.15, intensity: state.glow)
+            }
+            .animation(Theme.Motion.settle, value: state)
+            .accessibilityHidden(true)
+            .onAppear(perform: syncDrift)
+            .onChange(of: reduceMotion) { _, _ in syncDrift() }
     }
 
     private var sphere: some View {
@@ -175,8 +181,15 @@ struct PulsingOrb: View {
         )
     }
 
-    private func startDrift() {
-        guard !reduceMotion else { return }
+    /// Reduce Motion can be switched on by Accessibility Shortcut while the
+    /// orb is on screen, and an environment change does not remount a view —
+    /// so starting this only on appear would leave the rotation repeating
+    /// forever for a user who just asked for it to stop.
+    private func syncDrift() {
+        guard !reduceMotion else {
+            withAnimation(nil) { driftAngle = 0 }
+            return
+        }
         withAnimation(.linear(duration: 34).repeatForever(autoreverses: false)) {
             driftAngle = 360
         }

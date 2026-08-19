@@ -95,7 +95,11 @@ struct Windfield: View {
         .blendMode(.screen)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
-        .task { await trackTilt() }
+        // Keyed to `reduceMotion` so toggling it cancels and re-evaluates.
+        // Unkeyed, enabling the setting would leave the 30Hz sampler running
+        // and `tilt` updating — which keeps the parallax moving even though
+        // the timeline is paused, i.e. exactly what the setting asks to stop.
+        .task(id: reduceMotion) { await trackTilt() }
     }
 
     /// Low Power Mode thins the field rather than stopping it — a wind

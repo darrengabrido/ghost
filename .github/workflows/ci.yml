@@ -20,8 +20,23 @@ jobs:
         run: |
           echo "Available Xcodes:"
           ls /Applications | grep -i Xcode || true
-          XCODE_APP=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort | tail -1)
-          echo "Using ${XCODE_APP}"
+          # Pick by *version*, not by name. `ls | sort | tail -1` looks right
+          # and is not: the runner carries both Xcode_26.3.app and a bare
+          # Xcode.app, and locale collation ignores punctuation, so
+          # "Xcode.app" sorts after "Xcode_26.3.app" and wins. That silently
+          # selected Xcode 16.4 (iOS 18.5 SDK) on a machine that had 26.3.
+          XCODE_APP=""
+          BEST_VERSION=""
+          for app in /Applications/Xcode*.app; do
+            version=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" \
+              "${app}/Contents/Info.plist" 2>/dev/null) || continue
+            if [ -z "${BEST_VERSION}" ] || \
+               [ "$(printf '%s\n%s\n' "${BEST_VERSION}" "${version}" | sort -V | tail -1)" = "${version}" ]; then
+              BEST_VERSION="${version}"
+              XCODE_APP="${app}"
+            fi
+          done
+          echo "Using ${XCODE_APP} (Xcode ${BEST_VERSION})"
           sudo xcode-select -s "${XCODE_APP}/Contents/Developer"
           xcodebuild -version
           xcodebuild -showsdks

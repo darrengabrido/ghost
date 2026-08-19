@@ -21,6 +21,9 @@ struct BreathingModifier: ViewModifier {
             // after appearing, so `onAppear` alone leaves it inert for the
             // entire life of the screen.
             .onChange(of: isActive) { _, _ in sync() }
+            // Same reasoning for Reduce Motion: it can be toggled mid-screen,
+            // and without this the repeat-forever breath outlives the setting.
+            .onChange(of: reduceMotion) { _, _ in sync() }
     }
 
     private func sync() {
