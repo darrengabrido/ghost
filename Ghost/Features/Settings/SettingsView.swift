@@ -77,7 +77,7 @@ struct SettingsView: View {
                             Task { await viewModel.previewVoice() }
                         }
                         .font(.ghostBody.weight(.medium))
-                        .foregroundStyle(Color.ghostAccent)
+                        .foregroundStyle(Color.ghostAccentText)
                         .buttonStyle(.plain)
                     }
                     .padding(.top, Theme.Spacing.md)
@@ -91,7 +91,7 @@ struct SettingsView: View {
         HStack(spacing: Theme.Spacing.md) {
             Image(systemName: "speaker.wave.2")
                 .font(.ghostBody)
-                .foregroundStyle(Color.ghostAccent)
+                .foregroundStyle(Color.ghostAccentText)
                 .frame(width: 22)
 
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
@@ -152,7 +152,7 @@ struct SettingsView: View {
                     .padding(Theme.Spacing.sm)
                     .background(
                         RoundedRectangle(cornerRadius: Theme.Radius.sm, style: .continuous)
-                            .fill(Color.ghostBackground.opacity(0.55))
+                            .fill(Color.ghostSumi.opacity(0.6))
                     )
 
                     HStack {
@@ -165,7 +165,7 @@ struct SettingsView: View {
                         Spacer()
                         Button(String(localized: "settings.api.save"), action: viewModel.saveAPIKey)
                             .font(.ghostBody.weight(.medium))
-                            .foregroundStyle(Color.ghostAccent)
+                            .foregroundStyle(Color.ghostAccentText)
                             .buttonStyle(.plain)
                     }
                 }
@@ -190,7 +190,9 @@ struct SettingsView: View {
                 Button {
                     isConfirmingClearHistory = true
                 } label: {
-                    Text("settings.data.clear")
+                    // Ghost's brand colour is already red, so a red label
+                    // alone can't mark this as destructive. The glyph does.
+                    Label("settings.data.clear", systemImage: "trash")
                         .font(.ghostBody)
                         .foregroundStyle(Color.ghostDanger)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -225,6 +227,7 @@ struct SettingsView: View {
     private func sectionLabel(_ key: LocalizedStringKey) -> some View {
         Text(key)
             .font(.ghostLabel)
+            .tracking(Tracking.wide)
             .foregroundStyle(Color.ghostTextSecondary)
             .padding(.horizontal, Theme.Spacing.sm)
     }
@@ -243,7 +246,7 @@ struct SettingsView: View {
 
     private var settingsDivider: some View {
         Rectangle()
-            .fill(Color.ghostTextPrimary.opacity(0.06))
+            .fill(Theme.hairline(Theme.Hairline.faint))
             .frame(height: 1)
     }
 
@@ -257,9 +260,9 @@ struct SettingsView: View {
 
     private var apiKeyStatusForeground: Color {
         switch viewModel.apiKeyStatus {
-        case .keychain: .ghostAccent
-        case .buildTime: .ghostAccentSecondary
-        case .missing: .ghostTextSecondary
+        case .keychain: .ghostAccentText
+        case .buildTime: .ghostTextSecondary
+        case .missing: .ghostTextTertiary
         }
     }
 }

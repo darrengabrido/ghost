@@ -55,7 +55,7 @@ struct VoicePickerView: View {
                 Spacer()
                 if isSelected {
                     Image(systemName: "checkmark")
-                        .foregroundStyle(Color.ghostAccent)
+                        .foregroundStyle(Color.ghostAccentText)
                 }
             }
             .padding(.horizontal, Theme.Spacing.lg)
@@ -67,7 +67,7 @@ struct VoicePickerView: View {
 
     private var settingsDivider: some View {
         Rectangle()
-            .fill(Color.ghostTextPrimary.opacity(0.06))
+            .fill(Theme.hairline(Theme.Hairline.faint))
             .frame(height: 1)
             .padding(.leading, Theme.Spacing.lg)
     }

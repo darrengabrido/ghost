@@ -117,6 +117,32 @@ non-feature-specific building blocks (`Theme`, `Colors`, `Typography`,
 `Components/`, `Animations/`) so every feature screen pulls from the same
 palette and motion language instead of redefining it.
 
+`Colors` is two layers: a **palette** naming pigments (`ghostMaple`,
+`ghostBone`) and **semantic** aliases naming jobs (`ghostAccent`,
+`ghostTextPrimary`). Feature code uses the semantic names.
+
+Red is the identity rather than an accent, which forces one rule worth
+knowing before touching a screen: `ghostMaple` is a *field* colour — fills,
+glows, glass tints, strokes — and never carries small text, where it sits
+at 3.3:1 on the charcoal ground. Red type uses `ghostFlare` (6.3:1). For
+the same reason destructive actions can't be signalled by redness alone in
+an already-red app, so they pair `ghostCrimson` with a glyph.
+
+Every surface sits on `GhostAtmosphereBackground`: sumi ground, drifting
+fog, a `Canvas`-drawn wind of embers, static film grain, vignette. It is
+not decoration — Liquid Glass has nothing to refract over a flat fill, so
+the atmosphere is what makes the glass read as glass. Its `intensity`
+parameter is also the app's primary state signal: the room brightens and
+the wind thickens while Ghost is awake.
+
 ## Deployment target
 
-iOS 17.0 — required for `@Observable` and `SwiftData`.
+iOS 26.0.
+
+`@Observable` and `SwiftData` only need iOS 17, but the visual language is
+built on Liquid Glass (`glassEffect`, `GlassEffectContainer`, the `.glass`
+and `.glassProminent` button styles), which is iOS 26 and has no backport.
+Ghost previously carried a `#if compiler(>=6.2)` + `#available(iOS 26, *)`
+double guard with an `.ultraThinMaterial` imitation behind it; maintaining
+two visual languages cost more than the older versions were worth for an
+app that has not shipped. The guards and the fallback are gone.

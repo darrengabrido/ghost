@@ -27,7 +27,7 @@ private struct AppRootView: View {
                 router.destination(for: route, environment: environment)
             }
         }
-        .tint(Color.ghostAccent)
-        .background(Color.ghostBackground.ignoresSafeArea())
+        .tint(Color.ghostAccentText)
+        .background(Color.ghostSumi.ignoresSafeArea())
     }
 }

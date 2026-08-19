@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   build-and-test:
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
 
@@ -26,6 +26,12 @@ jobs:
           xcodebuild -version
           xcodebuild -showsdks
           xcrun simctl list runtimes
+          # Ghost targets iOS 26; without that SDK every Liquid Glass
+          # symbol fails to resolve and the log is unreadable. Say so here.
+          if ! xcodebuild -showsdks | grep -qE "iphoneos(2[6-9]|[3-9][0-9])"; then
+            echo "::error::No iOS 26+ SDK on this runner. Ghost's deployment target is iOS 26.0."
+            exit 1
+          fi
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -52,7 +58,7 @@ import json, subprocess
 data = json.loads(subprocess.check_output(
     ["xcrun", "simctl", "list", "devices", "available", "-j"]
 ))
-preferred = ("iPhone 16", "iPhone 17", "iPhone")
+preferred = ("iPhone 17", "iPhone 16", "iPhone")
 found = []
 for devices in data.get("devices", {}).values():
     for device in devices:
@@ -72,7 +78,7 @@ PY
             -skipMacroValidation test 2>&1 | tee "$RUNNER_TEMP/xcodebuild-test.log"
 
   lint:
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
       - name: Install SwiftLint

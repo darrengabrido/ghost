@@ -33,14 +33,14 @@ chatbot" and more like something present in the room with you.
 | Persistence | SwiftData |
 | Concurrency | Swift Concurrency (`async`/`await`, `AsyncStream`) |
 | Project generation | [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`project.yml` → `Ghost.xcodeproj`, never committed) |
-| Minimum iOS | 17.0 |
+| Minimum iOS | 26.0 |
 | Swift | 6.0 |
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full rationale.
 
 ## Requirements
 
-- Xcode 16+
+- Xcode 26+ (Ghost targets iOS 26 for Liquid Glass)
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen): `brew install xcodegen`
 - [SwiftLint](https://github.com/realm/SwiftLint) (optional but recommended): `brew install swiftlint`
 
