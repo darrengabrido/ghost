@@ -17,40 +17,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Select Xcode
-        run: |
-          echo "Available Xcodes:"
-          ls /Applications | grep -i Xcode || true
-          # Pick by *version*, not by name. `ls | sort | tail -1` looks right
-          # and is not: the runner carries both Xcode_26.3.app and a bare
-          # Xcode.app, and locale collation ignores punctuation, so
-          # "Xcode.app" sorts after "Xcode_26.3.app" and wins. That silently
-          # selected Xcode 16.4 (iOS 18.5 SDK) on a machine that had 26.3.
-          XCODE_APP=""
-          BEST_VERSION=""
-          for app in /Applications/Xcode*.app; do
-            version=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" \
-              "${app}/Contents/Info.plist" 2>/dev/null) || continue
-            if [ -z "${BEST_VERSION}" ] || \
-               [ "$(printf '%s\n%s\n' "${BEST_VERSION}" "${version}" | sort -V | tail -1)" = "${version}" ]; then
-              BEST_VERSION="${version}"
-              XCODE_APP="${app}"
-            fi
-          done
-          echo "Using ${XCODE_APP} (Xcode ${BEST_VERSION})"
-          sudo xcode-select -s "${XCODE_APP}/Contents/Developer"
-          xcodebuild -version
-          xcodebuild -showsdks
-          xcrun simctl list runtimes
-          # Ghost targets iOS 26; without that SDK every Liquid Glass
-          # symbol fails to resolve and the log is unreadable. Say so here.
-          # NOTE: pinned to macos-15 deliberately. `macos-26` is not a valid
-          # runner label for this account — jobs are rejected before they
-          # are created, which reads as an instant failure with no logs at
-          # all. Revisit only once that label is confirmed available.
-          if ! xcodebuild -showsdks | grep -qE "iphoneos(2[6-9]|[3-9][0-9])"; then
-            echo "::error::No iOS 26+ SDK on this runner. Ghost's deployment target is iOS 26.0."
-            exit 1
-          fi
+        # NOTE: pinned to macos-15 deliberately. `macos-26` is not a valid
+        # runner label for this account — jobs are rejected before they are
+        # created, which reads as an instant failure with no logs at all.
+        run: ./scripts/select-xcode.sh
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -124,3 +94,64 @@ jobs:
         run: brew install swiftlint
       - name: Run SwiftLint
         run: swiftlint --strict
+
+  screenshots:
+    # The reason this job exists: Ghost is an atmospheric app, the repo's PR
+    # template requires recordings for any UI change, and the redesign was
+    # authored on Linux where no simulator can run. This is the only way a
+    # frame of it gets rendered at all.
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: ./scripts/select-xcode.sh
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Provide placeholder secrets config
+        run: cp Ghost/Resources/Config/Secrets.xcconfig.example Ghost/Resources/Config/Secrets.xcconfig
+
+      - name: Capture screens on iPhone 17 Pro Max
+        run: |
+          set -o pipefail
+          DEVICE="iPhone 17 Pro Max"
+          if ! xcrun simctl list devices available | grep -q "${DEVICE}"; then
+            echo "::error::No '${DEVICE}' simulator on this runner. Available iPhones:"
+            xcrun simctl list devices available | grep iPhone || true
+            exit 1
+          fi
+          if ! xcodebuild -project Ghost.xcodeproj -scheme Ghost \
+            -destination "platform=iOS Simulator,name=${DEVICE}" \
+            -only-testing:GhostUITests/ScreenshotTests \
+            -resultBundlePath "$RUNNER_TEMP/Screens.xcresult" \
+            -skipMacroValidation test 2>&1 | tee "$RUNNER_TEMP/screens.log"; then
+            echo "::group::Failures"
+            grep -E "error:|Test Case .* failed|\*\* TEST .* \*\*" "$RUNNER_TEMP/screens.log" \
+              | sort -u || echo "(none found)"
+            echo "::endgroup::"
+            exit 1
+          fi
+
+      - name: Export screenshots
+        run: |
+          mkdir -p screenshots
+          # Falls back to shipping the raw result bundle if the export CLI
+          # shape differs — better a bundle the user can open than no artifact.
+          if ! xcrun xcresulttool export attachments \
+            --path "$RUNNER_TEMP/Screens.xcresult" \
+            --output-path screenshots; then
+            echo "::warning::Attachment export failed; uploading the raw .xcresult instead."
+            cp -R "$RUNNER_TEMP/Screens.xcresult" screenshots/
+          fi
+          ls -lR screenshots
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ghost-screens-iphone-17-pro-max
+          path: screenshots
+          if-no-files-found: error

@@ -2,7 +2,7 @@ import SwiftUI
 
 @main
 struct GhostApp: App {
-    @State private var environment = AppEnvironment.live()
+    @State private var environment = AppEnvironment.resolved()
 
     var body: some Scene {
         WindowGroup {
