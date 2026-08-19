@@ -2,33 +2,46 @@ import SwiftUI
 
 /// The room Ghost lives in.
 ///
-/// Four layers, back to front: sumi ground, drifting fog, streaming wind,
-/// film grain, then a vignette to close the edges. Liquid Glass has
-/// nothing to refract over a flat fill — this is what gives every glass
-/// surface in the app something to bend.
+/// Back to front: sumi ground, drifting fog, streaming wind, film grain,
+/// vignette. Liquid Glass has nothing to refract over a flat fill — this
+/// is what gives every glass surface in the app something to bend.
 struct GhostAtmosphereBackground: View {
     /// Rises when Ghost is awake. Drives fog brightness and wind density
     /// together, so the room visibly stirs when the presence wakes.
     var intensity: Double = 1
 
     var body: some View {
-        ZStack {
-            Color.ghostSumi
+        GeometryReader { geometry in
+            ZStack {
+                // The ground is a lit volume, not a flat fill: warm
+                // charcoal where the light is, sinking to sumi at the
+                // edges. A single flat colour behind a scene that is
+                // otherwise all falloff is the thing that makes a dark
+                // app look like a dark rectangle.
+                RadialGradient(
+                    colors: [.ghostCharcoal, .ghostSumi],
+                    center: .center,
+                    startRadius: 0,
+                    endRadius: max(geometry.size.width, geometry.size.height) * 0.62
+                )
 
-            DriftingFog(intensity: intensity)
+                DriftingFog(intensity: intensity, size: geometry.size)
 
-            Windfield(tint: .ghostFlare, intensity: 0.55 + intensity * 0.45)
+                Windfield(intensity: 0.55 + intensity * 0.45)
 
-            FilmGrain()
+                FilmGrain()
 
-            // Closes the corners so the composition always reads as a
-            // single lit volume rather than a rectangle of effects.
-            RadialGradient(
-                colors: [.clear, Color.ghostSumi.opacity(0.85)],
-                center: .center,
-                startRadius: 120,
-                endRadius: 520
-            )
+                // Closes the corners so the composition reads as one lit
+                // volume rather than a rectangle of effects. Sized off the
+                // container, not fixed points, or it crops differently on
+                // every device.
+                RadialGradient(
+                    colors: [.clear, Color.ghostSumi.opacity(0.9)],
+                    center: .center,
+                    startRadius: min(geometry.size.width, geometry.size.height) * 0.34,
+                    endRadius: max(geometry.size.width, geometry.size.height) * 0.72
+                )
+            }
         }
         .ignoresSafeArea()
         .allowsHitTesting(false)
@@ -36,10 +49,12 @@ struct GhostAtmosphereBackground: View {
     }
 }
 
-/// A slow-moving bank of colored fog. Each layer drifts on its own period
-/// so the three never resolve into a repeating pattern.
+/// Slow-moving banks of coloured fog. Each drifts on its own period, and
+/// the periods are chosen not to share factors, so the set never resolves
+/// into a pattern the eye can lock onto.
 private struct DriftingFog: View {
     var intensity: Double
+    var size: CGSize
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -55,23 +70,27 @@ private struct DriftingFog: View {
         FogLayer(
             id: 2, color: .ghostRust, anchor: UnitPoint(x: 0.48, y: 1.02),
             radiusFactor: 0.66, alpha: 0.30, period: 73, travel: 38
+        ),
+        // The cold one, deep in the corner. Without it the warm layers
+        // have nothing to be warm against.
+        FogLayer(
+            id: 3, color: .ghostMoon, anchor: UnitPoint(x: 0.94, y: 0.06),
+            radiusFactor: 0.62, alpha: 0.20, period: 89, travel: 30
         )
     ]
 
     var body: some View {
-        GeometryReader { geometry in
-            TimelineView(.animation(minimumInterval: 1.0 / 20.0, paused: reduceMotion)) { timeline in
-                let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
-                ZStack {
-                    ForEach(Self.layers) { layer in
-                        glow(for: layer, in: geometry.size, at: time)
-                    }
+        TimelineView(.animation(minimumInterval: 1.0 / 20.0, paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+            ZStack {
+                ForEach(Self.layers) { layer in
+                    glow(for: layer, at: time)
                 }
             }
         }
     }
 
-    private func glow(for layer: FogLayer, in size: CGSize, at time: Double) -> some View {
+    private func glow(for layer: FogLayer, at time: Double) -> some View {
         let angle = time * 2 * .pi / layer.period
         let radius = max(size.width * layer.radiusFactor, 200)
 

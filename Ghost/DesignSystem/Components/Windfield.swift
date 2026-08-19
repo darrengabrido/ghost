@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// One drifting mote of ash. Value type and `Sendable` so the whole field
-/// can be captured by `Canvas`'s render closure without dragging view
-/// state across the boundary.
+/// One drifting mote. Value type and `Sendable` so the whole field can be
+/// captured by `Canvas`'s render closure without dragging view state
+/// across the boundary.
 struct WindMote: Sendable {
     let originY: CGFloat
     /// Start offset along the travel path, 0...1.
@@ -16,10 +16,19 @@ struct WindMote: Sendable {
     let opacity: Double
     /// 0 = far (small, barely parallaxes), 1 = near (large, swings wide).
     let depth: CGFloat
+    /// Embers glow in the accent; everything else is pale ash.
+    let isEmber: Bool
 
     /// Builds a deterministic field. Same seed, same wind, every launch.
+    ///
+    /// Most of the air is ash. Only about a quarter of it burns, and more
+    /// of that quarter sits in the near layer where it stays crisp —
+    /// tinting *every* mote red would turn the accent into a colour cast
+    /// and stop it meaning anything.
     static func field(count: Int, seed: UInt64, near: Bool) -> [WindMote] {
         var generator = SeededGenerator(seed: seed)
+        let emberChance = near ? 0.35 : 0.18
+
         return (0..<count).map { _ in
             let depth = CGFloat.random(in: near ? 0.55...1 : 0...0.45, using: &generator)
             return WindMote(
@@ -31,14 +40,15 @@ struct WindMote: Sendable {
                 sway: CGFloat.random(in: 8...34, using: &generator),
                 swaySpeed: CGFloat.random(in: 0.25...0.75, using: &generator),
                 opacity: Double.random(in: near ? 0.35...0.85 : 0.18...0.5, using: &generator),
-                depth: depth
+                depth: depth,
+                isEmber: Double.random(in: 0...1, using: &generator) < emberChance
             )
         }
     }
 }
 
-/// The always-on wind: embers and ash streaming across the frame on a
-/// slow diagonal, parallaxing against device tilt.
+/// The always-on wind: ash and embers streaming across the frame on a slow
+/// diagonal, parallaxing against device tilt.
 ///
 /// Two `Canvas` layers rather than a stack of SwiftUI shapes — sixty
 /// animated views would cost a layout pass each frame, where this costs
@@ -46,7 +56,10 @@ struct WindMote: Sendable {
 /// the entire layer, not one per mote) and the near layer stays crisp and
 /// slightly elongated, which is what sells the direction of travel.
 struct Windfield: View {
-    var tint: Color = .ghostMaple
+    /// The rare, burning minority.
+    var ember: Color = .ghostFlare
+    /// The pale majority.
+    var ash: Color = .ghostBone
     /// Scales opacity across the whole field. Rises when Ghost is awake.
     var intensity: Double = 1
 
@@ -61,28 +74,21 @@ struct Windfield: View {
             // Hoisted out of the render closures so `Canvas` captures only
             // values, never `self`.
             let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
-            let currentTilt = tilt
-            let strength = intensity
-            let color = tint
+            let frame = WindFrame(
+                ember: ember, ash: ash, intensity: intensity,
+                tilt: tilt, time: time, elongation: 2.2
+            )
             let far = Self.budgeted(Self.farField)
             let near = Self.budgeted(Self.nearField)
 
             ZStack {
                 Canvas { context, size in
-                    Windfield.draw(
-                        into: &context, size: size, motes: far, time: time,
-                        tilt: currentTilt, tint: color,
-                        intensity: strength * 0.55, elongation: 1
-                    )
+                    Windfield.draw(into: &context, size: size, motes: far, frame: frame.distant)
                 }
                 .blur(radius: 7)
 
                 Canvas { context, size in
-                    Windfield.draw(
-                        into: &context, size: size, motes: near, time: time,
-                        tilt: currentTilt, tint: color,
-                        intensity: strength, elongation: 2.2
-                    )
+                    Windfield.draw(into: &context, size: size, motes: near, frame: frame)
                 }
             }
         }
@@ -113,47 +119,71 @@ struct Windfield: View {
         }
     }
 
-    // swiftlint:disable:next function_parameter_count
     private static func draw(
         into context: inout GraphicsContext,
         size: CGSize,
         motes: [WindMote],
-        time: Double,
-        tilt: CGSize,
-        tint: Color,
-        intensity: Double,
-        elongation: CGFloat
+        frame: WindFrame
     ) {
+        let time = frame.time
         let span = size.width + 160
+        // Two incommensurate periods, so the wind swells and drops without
+        // ever settling into a rhythm you can count along with.
+        let gust = sin(time / 11.3) * sin(time / 6.7)
+        let push = CGFloat(gust) * 26
 
         for mote in motes {
             let progress = fract(mote.phase + CGFloat(time) * mote.speed)
             // Motes rise as they cross — wind off the sea, not a screensaver.
-            let posX = progress * span - 80 + tilt.width * mote.depth * 30
+            let posX = progress * span - 80 + frame.tilt.width * mote.depth * 30 + push * mote.depth
             let rise = progress * size.height * 0.24
             let wobble = sin(time * Double(mote.swaySpeed) + Double(mote.phase) * .pi * 2)
             let posY = mote.originY * size.height * 1.15
                 - rise
                 + CGFloat(wobble) * mote.sway
-                + tilt.height * mote.depth * 22
+                + frame.tilt.height * mote.depth * 22
 
-            // Fade in and out at the edges of travel so nothing pops.
+            // Fade in and out at the ends of travel so nothing pops.
             let fade = sin(Double(progress) * .pi)
-            let alpha = mote.opacity * fade * intensity
+            let alpha = mote.opacity * fade * frame.intensity
+                * (mote.isEmber ? 1 : 0.55)
+                * (0.8 + 0.2 * gust)
             guard alpha > 0.004 else { continue }
 
             let rect = CGRect(
                 x: posX,
                 y: posY,
-                width: mote.size * elongation,
+                width: mote.size * frame.elongation,
                 height: mote.size
             )
-            context.fill(Path(ellipseIn: rect), with: .color(tint.opacity(alpha)))
+            let color = mote.isEmber ? frame.ember : frame.ash
+            context.fill(Path(ellipseIn: rect), with: .color(color.opacity(alpha)))
         }
     }
 
     private static func fract(_ value: CGFloat) -> CGFloat {
         value - value.rounded(.down)
+    }
+}
+
+/// Everything the renderer needs that isn't per-mote, bundled so `draw`
+/// keeps a signature a person can read.
+struct WindFrame: Sendable {
+    let ember: Color
+    let ash: Color
+    let intensity: Double
+    let tilt: CGSize
+    let time: Double
+    /// How far each mote is stretched along its direction of travel.
+    let elongation: CGFloat
+
+    /// The far layer: dimmer, and round rather than streaked, because
+    /// distance costs you both brightness and any sense of motion blur.
+    var distant: WindFrame {
+        WindFrame(
+            ember: ember, ash: ash, intensity: intensity * 0.55,
+            tilt: tilt, time: time, elongation: 1
+        )
     }
 }
 

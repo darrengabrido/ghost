@@ -16,8 +16,11 @@ struct GhostButton: View {
 
     var title: String
     var style: Style = .primary
-    /// Primary actions fill their container; secondary ones hug.
-    var isWide = true
+    /// Full-bleed or hugging. Hugging is the default because a
+    /// full-width filled slab is the least considered shape a button can
+    /// take; reach for `isWide` only when a control genuinely needs to
+    /// span its container.
+    var isWide = false
     var action: () -> Void
 
     var body: some View {
@@ -43,6 +46,7 @@ struct GhostButton: View {
                 .font(.ghostBody.weight(.medium))
                 .tracking(Tracking.loose)
                 .frame(maxWidth: isWide ? .infinity : nil)
+                .padding(.horizontal, isWide ? 0 : Theme.Spacing.xl)
                 .padding(.vertical, Theme.Spacing.sm)
         }
         .controlSize(.large)
@@ -56,7 +60,7 @@ struct GhostButton: View {
             VStack(spacing: Theme.Spacing.md) {
                 GhostButton(title: "Continue") {}
                 GhostButton(title: "Not now", style: .subtle) {}
-                GhostButton(title: "Erase everything", style: .destructive, isWide: false) {}
+                GhostButton(title: "Erase everything", style: .destructive) {}
             }
             .padding(Theme.Spacing.xl)
         }

@@ -9,6 +9,10 @@ import SwiftUI
 /// bottom-trailing one, as though a single low light sat above the frame.
 /// System glass alone reads as translucent; the directional hairline is
 /// what makes it read as a cut edge.
+///
+/// Honours Reduce Transparency by falling back to opaque surfaces. An
+/// app built almost entirely out of glass is exactly the app that has to
+/// answer that setting properly.
 struct GhostGlass<Content: View>: View {
     enum Style {
         /// Neutral glass. The default for anything the interface owns.
@@ -24,6 +28,8 @@ struct GhostGlass<Content: View>: View {
     var cornerRadius: CGFloat = Theme.Radius.lg
     @ViewBuilder var content: Content
 
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
     init(
         style: Style = .regular,
         cornerRadius: CGFloat = Theme.Radius.lg,
@@ -37,11 +43,16 @@ struct GhostGlass<Content: View>: View {
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
 
-        content
-            .glassEffect(glass, in: shape)
-            .overlay {
-                shape.strokeBorder(Self.hairline, lineWidth: 0.8)
+        Group {
+            if reduceTransparency {
+                content.background(opaqueFill, in: shape)
+            } else {
+                content.glassEffect(glass, in: shape)
             }
+        }
+        .overlay {
+            shape.strokeBorder(Self.hairline, lineWidth: 0.8)
+        }
     }
 
     private var glass: Glass {
@@ -49,6 +60,13 @@ struct GhostGlass<Content: View>: View {
         case .regular: .regular
         case .interactive: .regular.interactive()
         case .ember: .regular.tint(Color.ghostMaple.opacity(0.26))
+        }
+    }
+
+    private var opaqueFill: Color {
+        switch style {
+        case .regular, .interactive: .ghostAshRaised
+        case .ember: .ghostAshEmber
         }
     }
 

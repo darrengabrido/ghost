@@ -23,8 +23,9 @@ struct HistoryView: View {
                 .opacity(0.5)
 
             Text("history.empty")
-                .font(.ghostBody)
+                .font(.ghostTitle)
                 .foregroundStyle(Color.ghostTextSecondary)
+                .multilineTextAlignment(.center)
         }
     }
 
@@ -60,12 +61,16 @@ struct HistoryView: View {
     }
 
     private func row(for record: ConversationRecord) -> some View {
-        GhostGlass(style: .interactive, cornerRadius: Theme.Radius.md) {
+        // `.regular`, not `.interactive`: interactive glass lifts under a
+        // finger, and there is no conversation-detail route for these rows
+        // to open. An affordance that promises a tap and does nothing is
+        // worse than no affordance.
+        GhostGlass(cornerRadius: Theme.Radius.md) {
             HStack(alignment: .top, spacing: Theme.Spacing.md) {
                 // A dim ember standing in for the orb — each conversation
                 // is one of the times the presence was awake.
                 Circle()
-                    .fill(Color.ghostMaple)
+                    .fill(Color.ghostAccent)
                     .frame(width: 5, height: 5)
                     .padding(.top, 7)
 

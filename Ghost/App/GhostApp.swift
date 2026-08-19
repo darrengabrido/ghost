@@ -28,6 +28,6 @@ private struct AppRootView: View {
             }
         }
         .tint(Color.ghostAccentText)
-        .background(Color.ghostSumi.ignoresSafeArea())
+        .background(Color.ghostBackground.ignoresSafeArea())
     }
 }

@@ -19,6 +19,10 @@ struct OnboardingView: View {
                         .tracking(Tracking.display)
                         .foregroundStyle(Self.titleGradient)
                         .multilineTextAlignment(.center)
+                        // A serif largeTitle at AX5 will not fit three
+                        // words on one line; let it give a little rather
+                        // than truncate or shove the orb off-screen.
+                        .minimumScaleFactor(0.7)
 
                     Text("onboarding.subtitle")
                         .font(.ghostBody)
@@ -35,7 +39,6 @@ struct OnboardingView: View {
                         viewModel.continueTapped()
                     }
                 }
-                .padding(.horizontal, Theme.Spacing.lg)
                 .padding(.bottom, Theme.Spacing.xl)
             }
         }
@@ -45,7 +48,7 @@ struct OnboardingView: View {
     /// The title fades toward mist at its baseline, as though the words are
     /// only half-surfaced out of the dark.
     private static let titleGradient = LinearGradient(
-        colors: [.ghostBone, .ghostMist],
+        colors: [.ghostTextPrimary, .ghostTextSecondary],
         startPoint: .top,
         endPoint: .bottom
     )

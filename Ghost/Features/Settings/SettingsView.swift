@@ -152,7 +152,7 @@ struct SettingsView: View {
                     .padding(Theme.Spacing.sm)
                     .background(
                         RoundedRectangle(cornerRadius: Theme.Radius.sm, style: .continuous)
-                            .fill(Color.ghostSumi.opacity(0.6))
+                            .fill(Color.ghostBackground.opacity(0.6))
                     )
 
                     HStack {

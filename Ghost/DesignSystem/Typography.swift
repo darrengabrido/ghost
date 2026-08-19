@@ -23,8 +23,10 @@ extension Font {
 enum Tracking {
     /// Section labels and status captions — airy, deliberate.
     static let wide: CGFloat = 2.4
-    /// Body-adjacent labels that still want a little room.
-    static let loose: CGFloat = 0.6
+    /// Buttons and short sentence-case labels. Wide enough to read as a
+    /// decision rather than a default, short of the airiness that only
+    /// works on small caps.
+    static let loose: CGFloat = 1.2
     /// Display serif — pulled slightly tight so it sits as one shape.
     static let display: CGFloat = -0.4
 }

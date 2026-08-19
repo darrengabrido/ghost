@@ -15,12 +15,20 @@ struct BreathingModifier: ViewModifier {
         content
             .scaleEffect(isExpanded ? 1.04 : 0.97)
             .opacity(isExpanded ? 1.0 : 0.85)
-            .onAppear {
-                guard isActive, !reduceMotion else { return }
-                withAnimation(Theme.Motion.breathe) {
-                    isExpanded = true
-                }
-            }
+            .onAppear(perform: sync)
+            // Without this the breath only ever starts for a view that was
+            // already active when it mounted — the orb wakes from idle
+            // after appearing, so `onAppear` alone leaves it inert for the
+            // entire life of the screen.
+            .onChange(of: isActive) { _, _ in sync() }
+    }
+
+    private func sync() {
+        guard isActive, !reduceMotion else {
+            withAnimation(Theme.Motion.quick) { isExpanded = false }
+            return
+        }
+        withAnimation(Theme.Motion.breathe) { isExpanded = true }
     }
 }
 

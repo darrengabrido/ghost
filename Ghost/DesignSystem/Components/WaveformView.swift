@@ -14,6 +14,10 @@ struct WaveformView: View {
             ForEach(Array(levels.enumerated()), id: \.offset) { _, level in
                 Capsule()
                     .fill(gradient)
+                    // Loud bars burn brighter, not just taller. Height
+                    // alone is legible; height plus luminance is the
+                    // difference between a meter and a voice.
+                    .opacity(0.4 + Double(min(level, 1)) * 0.6)
                     .frame(width: barWidth, height: max(barWidth, level * maxHeight))
             }
         }
