@@ -52,3 +52,27 @@ Real verification for changes made in one of these sessions happens via:
 
 Treat code changes made in a Linux session as unverified until one of those
 two has actually run.
+
+### CI has never actually run
+
+Worth knowing before you rely on the first bullet: **no CI job in this
+repository has ever been assigned a runner.** Every run since the initial
+scaffold fails roughly three seconds after it is created, with
+`runner_id: 0`, an empty runner name, and no logs at all (the logs endpoint
+404s, because nothing ever started).
+
+That signature is a runner *availability* problem at the account level —
+macOS runners not enabled, or an Actions spending limit — not a fault in
+this workflow or in the code being pushed. Nothing in the repository can
+fix it; it has to be resolved in the account's Actions/billing settings.
+
+The practical consequence: a green check has never been available here, and
+right now **a real Mac is the only verification that exists**. Do not read a
+failed CI run on this repo as a signal about your change until a job has
+been seen to start.
+
+One related trap, since it looks identical from the outside but is *not* the
+same bug: an invalid `runs-on` label (for example `macos-26`, which this
+account does not have) causes the run to be created with **zero jobs** rather
+than with jobs that fail to start. If a run shows no jobs at all, check the
+runner label first.

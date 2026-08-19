@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   build-and-test:
-    runs-on: macos-26
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
@@ -28,6 +28,10 @@ jobs:
           xcrun simctl list runtimes
           # Ghost targets iOS 26; without that SDK every Liquid Glass
           # symbol fails to resolve and the log is unreadable. Say so here.
+          # NOTE: pinned to macos-15 deliberately. `macos-26` is not a valid
+          # runner label for this account — jobs are rejected before they
+          # are created, which reads as an instant failure with no logs at
+          # all. Revisit only once that label is confirmed available.
           if ! xcodebuild -showsdks | grep -qE "iphoneos(2[6-9]|[3-9][0-9])"; then
             echo "::error::No iOS 26+ SDK on this runner. Ghost's deployment target is iOS 26.0."
             exit 1
@@ -78,7 +82,7 @@ PY
             -skipMacroValidation test 2>&1 | tee "$RUNNER_TEMP/xcodebuild-test.log"
 
   lint:
-    runs-on: macos-26
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - name: Install SwiftLint
