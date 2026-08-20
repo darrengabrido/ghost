@@ -57,7 +57,11 @@ final class SwiftDataConversationStore: ConversationStore {
 /// early development — no disk persistence.
 @MainActor
 final class InMemoryConversationStore: ConversationStore {
-    private var records: [ConversationRecord] = []
+    private var records: [ConversationRecord]
+
+    init(seeded records: [ConversationRecord] = []) {
+        self.records = records
+    }
 
     func save(_ messages: [Message]) async throws {
         guard let first = messages.first else { return }

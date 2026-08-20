@@ -1,30 +1,44 @@
 import SwiftUI
 
 /// A minimal live waveform driven by microphone amplitude samples
-/// (0...1). Intended for the listening state, directly below the orb.
+/// (0...1). Sits directly below the orb while Ghost is listening.
 struct WaveformView: View {
     var levels: [CGFloat]
-    var color: Color = .ghostAccentSecondary
-    var barWidth: CGFloat = 3
-    var spacing: CGFloat = 4
+    var color: Color = .ghostFlare
+    var barWidth: CGFloat = 2.5
+    var spacing: CGFloat = 5
+    var maxHeight: CGFloat = 44
 
     var body: some View {
         HStack(alignment: .center, spacing: spacing) {
             ForEach(Array(levels.enumerated()), id: \.offset) { _, level in
-                RoundedRectangle(cornerRadius: barWidth / 2)
-                    .fill(color)
-                    .frame(width: barWidth, height: max(4, level * 48))
+                Capsule()
+                    .fill(gradient)
+                    // Loud bars burn brighter, not just taller. Height
+                    // alone is legible; height plus luminance is the
+                    // difference between a meter and a voice.
+                    .opacity(0.4 + Double(min(level, 1)) * 0.6)
+                    .frame(width: barWidth, height: max(barWidth, level * maxHeight))
             }
         }
-        .frame(height: 48)
+        .frame(height: maxHeight)
         .animation(.easeInOut(duration: 0.15), value: levels)
         .accessibilityHidden(true)
+    }
+
+    /// Bars burn out toward their tips rather than ending on a hard edge.
+    private var gradient: LinearGradient {
+        LinearGradient(
+            colors: [color.opacity(0.45), color, color.opacity(0.45)],
+            startPoint: .top,
+            endPoint: .bottom
+        )
     }
 }
 
 #Preview {
     ZStack {
-        Color.ghostBackground.ignoresSafeArea()
+        GhostAtmosphereBackground()
         WaveformView(levels: (0..<24).map { _ in CGFloat.random(in: 0.1...1) })
     }
 }

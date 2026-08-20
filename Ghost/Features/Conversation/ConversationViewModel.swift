@@ -4,7 +4,7 @@ import Foundation
 @MainActor
 final class ConversationViewModel {
     private(set) var messages: [Message] = []
-    private(set) var orbState: PulsingOrb.State = .idle
+    private(set) var orbState: PulsingOrb.Phase = .idle
     private(set) var liveTranscript: String = ""
     private(set) var audioLevels: [CGFloat] = Array(repeating: 0, count: 24)
     var errorMessage: String?
