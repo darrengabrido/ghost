@@ -57,6 +57,84 @@ struct SettingsViewModelTests {
     }
 
     @Test
+    func switchingProviderClearsDraftAndShowsThatProvidersKeyStatus() throws {
+        let apiKeyStore = InMemoryAPIKeyStore()
+        try apiKeyStore.save("sk-anthropic", for: .anthropic)
+        let viewModel = makeViewModel(apiKeyStore: apiKeyStore)
+
+        #expect(viewModel.selectedProvider == .anthropic)
+        #expect(viewModel.apiKeyStatus == .keychain)
+
+        viewModel.draftAPIKey = "unsaved draft"
+        viewModel.selectedProvider = .openAI
+
+        #expect(viewModel.draftAPIKey.isEmpty)
+        #expect(viewModel.apiKeyStatus == .missing)
+        #expect(!viewModel.keychainHasKey)
+    }
+
+    @Test
+    func savingAKeyOnlyAffectsTheSelectedProvider() throws {
+        let apiKeyStore = InMemoryAPIKeyStore()
+        let viewModel = makeViewModel(apiKeyStore: apiKeyStore)
+
+        viewModel.selectedProvider = .grok
+        viewModel.draftAPIKey = "sk-grok"
+        viewModel.saveAPIKey()
+
+        #expect(try apiKeyStore.savedKey(for: .grok) == "sk-grok")
+        #expect(try apiKeyStore.savedKey(for: .anthropic) == nil)
+
+        viewModel.selectedProvider = .anthropic
+        #expect(viewModel.apiKeyStatus == .missing)
+    }
+
+    @Test
+    func defaultsToTheProvidersDefaultModel() {
+        let viewModel = makeViewModel()
+
+        #expect(viewModel.selectedProvider == .anthropic)
+        #expect(viewModel.selectedModel == AIProvider.anthropic.defaultModel)
+    }
+
+    @Test
+    func selectingAModelPersistsItPerProvider() {
+        let preferences = InMemoryUserPreferencesStore()
+        let viewModel = makeViewModel(preferences: preferences)
+
+        viewModel.selectModel("claude-opus-5")
+
+        #expect(viewModel.selectedModel == "claude-opus-5")
+        #expect(preferences.selectedModel(for: .anthropic) == "claude-opus-5")
+        #expect(viewModel.draftModel.isEmpty)
+    }
+
+    @Test
+    func selectModelIgnoresBlankInput() {
+        let viewModel = makeViewModel()
+        let original = viewModel.selectedModel
+
+        viewModel.draftModel = "   "
+        viewModel.selectModel(viewModel.draftModel)
+
+        #expect(viewModel.selectedModel == original)
+    }
+
+    @Test
+    func switchingProviderLoadsThatProvidersOwnModelSelection() {
+        let preferences = InMemoryUserPreferencesStore()
+        let viewModel = makeViewModel(preferences: preferences)
+
+        viewModel.selectModel("claude-opus-5")
+        viewModel.selectedProvider = .openAI
+
+        #expect(viewModel.selectedModel == AIProvider.openAI.defaultModel)
+
+        viewModel.selectedProvider = .anthropic
+        #expect(viewModel.selectedModel == "claude-opus-5")
+    }
+
+    @Test
     func clearHistoryDeletesAllSavedConversations() async throws {
         let store = InMemoryConversationStore()
         try await store.save([Message(speaker: .user, text: "hello")])

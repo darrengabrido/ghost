@@ -22,6 +22,20 @@ final class SettingsViewModel {
         didSet { preferences.voiceIdentifier = voiceIdentifier }
     }
 
+    var selectedProvider: AIProvider {
+        didSet {
+            guard oldValue != selectedProvider else { return }
+            preferences.selectedAIProvider = selectedProvider
+            draftAPIKey = ""
+            selectedModel = preferences.selectedModel(for: selectedProvider)
+            draftModel = ""
+            refreshKeychainStatus()
+        }
+    }
+
+    private(set) var selectedModel: String
+    var draftModel = ""
+
     var draftAPIKey = ""
     var errorMessage: String?
     private(set) var keychainHasKey = false
@@ -42,7 +56,8 @@ final class SettingsViewModel {
 
     var apiKeyStatus: APIKeyStatus {
         if keychainHasKey { return .keychain }
-        if let key = bundle.object(forInfoDictionaryKey: "GhostAIAPIKey") as? String,
+        if selectedProvider == .anthropic,
+           let key = bundle.object(forInfoDictionaryKey: "GhostAIAPIKey") as? String,
            !ConfigurationValue.isPlaceholder(key) {
             return .buildTime
         }
@@ -78,14 +93,24 @@ final class SettingsViewModel {
         speechRate = preferences.speechRate
         isVoiceInterruptionEnabled = preferences.isVoiceInterruptionEnabled
         voiceIdentifier = preferences.voiceIdentifier
+        selectedProvider = preferences.selectedAIProvider
+        selectedModel = preferences.selectedModel(for: preferences.selectedAIProvider)
         refreshKeychainStatus()
+    }
+
+    func selectModel(_ model: String) {
+        let trimmed = model.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        selectedModel = trimmed
+        preferences.setSelectedModel(trimmed, for: selectedProvider)
+        draftModel = ""
     }
 
     func saveAPIKey() {
         let trimmed = draftAPIKey.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !ConfigurationValue.isPlaceholder(trimmed) else { return }
         do {
-            try apiKeyStore.save(trimmed)
+            try apiKeyStore.save(trimmed, for: selectedProvider)
             draftAPIKey = ""
             refreshKeychainStatus()
         } catch {
@@ -95,7 +120,7 @@ final class SettingsViewModel {
 
     func removeAPIKey() {
         do {
-            try apiKeyStore.clear()
+            try apiKeyStore.clear(for: selectedProvider)
             refreshKeychainStatus()
         } catch {
             errorMessage = error.localizedDescription
@@ -119,7 +144,7 @@ final class SettingsViewModel {
     }
 
     private func refreshKeychainStatus() {
-        let saved = try? apiKeyStore.savedKey()
+        let saved = try? apiKeyStore.savedKey(for: selectedProvider)
         keychainHasKey = saved.map { !ConfigurationValue.isPlaceholder($0) } ?? false
     }
 }

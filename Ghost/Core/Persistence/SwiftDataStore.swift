@@ -11,7 +11,11 @@ final class SwiftDataConversationStore: ConversationStore {
 
     init() {
         do {
-            container = try ModelContainer(for: ConversationRecord.self)
+            let configuration = ModelConfiguration(
+                "ConversationHistory",
+                schema: Schema([ConversationRecord.self])
+            )
+            container = try ModelContainer(for: ConversationRecord.self, configurations: configuration)
         } catch {
             fatalError("Failed to create SwiftData ModelContainer: \(error)")
         }

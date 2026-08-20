@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct HistoryView: View {
-    var viewModel: HistoryViewModel
+    @Bindable var viewModel: HistoryViewModel
 
     var body: some View {
         ZStack {
@@ -9,11 +9,14 @@ struct HistoryView: View {
 
             if viewModel.conversations.isEmpty {
                 emptyState
+            } else if viewModel.filteredConversations.isEmpty {
+                noResultsState
             } else {
                 conversationList
             }
         }
         .navigationTitle(String(localized: "history.title"))
+        .searchable(text: $viewModel.searchText, prompt: String(localized: "history.search.prompt"))
         .task { await viewModel.load() }
     }
 
@@ -29,13 +32,19 @@ struct HistoryView: View {
         }
     }
 
+    private var noResultsState: some View {
+        Text("history.noResults")
+            .font(.ghostBody)
+            .foregroundStyle(Color.ghostTextSecondary)
+    }
+
     /// Still a `List` rather than a hand-rolled stack: swipe-to-delete,
     /// its accessibility, and the edit affordances all come free here, and
     /// none of them are worth reimplementing for a visual result that
     /// `.listRowBackground(.clear)` already gets us.
     private var conversationList: some View {
         List {
-            ForEach(viewModel.conversations) { record in
+            ForEach(viewModel.filteredConversations) { record in
                 row(for: record)
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
@@ -50,7 +59,7 @@ struct HistoryView: View {
             }
             .onDelete { indexSet in
                 for index in indexSet {
-                    let record = viewModel.conversations[index]
+                    let record = viewModel.filteredConversations[index]
                     Task { await viewModel.delete(record) }
                 }
             }

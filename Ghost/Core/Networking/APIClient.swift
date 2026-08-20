@@ -1,53 +1,64 @@
 import Foundation
 
-/// Thin HTTP client. Provider-specific AI/voice adapters build on top of
-/// this rather than each rolling their own URLSession handling.
+/// Thin HTTP client, scoped to one `AIProvider`. Provider-specific AI
+/// adapters build on top of this rather than each rolling their own
+/// URLSession handling; each adapter is responsible for setting whatever
+/// auth header its provider expects (see `requireAPIKey()`), since that
+/// varies by provider (`x-api-key`, `Authorization: Bearer`, ...).
 struct APIClient {
+    let provider: AIProvider
     private let baseURL: URL
     private let session: URLSession
     private let apiKeyStore: APIKeyStore
     private let bundle: Bundle
 
-    /// Reads `GhostAPIBaseURL` from Info.plist (substituted at build time
-    /// from `Secrets.xcconfig`). The API key is resolved per request —
-    /// Keychain first, then the build-time `GhostAIAPIKey` — so a key
-    /// saved in Settings is picked up without restarting.
+    /// Fails to construct when no usable API key exists for `provider` —
+    /// that's the signal `AppEnvironment` uses to fall back to
+    /// `UnconfiguredAIConversationService`. The base URL always resolves
+    /// (falling back to `provider.defaultBaseURL`), so it's the key, not
+    /// the URL, that determines whether this provider is configured.
     init(
+        provider: AIProvider,
         session: URLSession = .shared,
         apiKeyStore: APIKeyStore,
         bundle: Bundle = .main
     ) throws {
+        self.provider = provider
+        self.baseURL = Self.resolveBaseURL(for: provider, bundle: bundle)
+        self.session = session
+        self.apiKeyStore = apiKeyStore
+        self.bundle = bundle
+        _ = try requireAPIKey()
+    }
+
+    private static func resolveBaseURL(for provider: AIProvider, bundle: Bundle) -> URL {
         guard
+            provider == .anthropic,
             let baseURLString = bundle.object(forInfoDictionaryKey: "GhostAPIBaseURL") as? String,
             !ConfigurationValue.isPlaceholder(baseURLString),
             let baseURL = URL(string: baseURLString)
         else {
-            throw NetworkError.missingConfiguration("GhostAPIBaseURL")
+            return provider.defaultBaseURL
         }
-
-        self.baseURL = baseURL
-        self.session = session
-        self.apiKeyStore = apiKeyStore
-        self.bundle = bundle
+        return baseURL
     }
 
-    /// The API key adapters should send. Prefers a Settings/Keychain value
-    /// over the build-time plist key.
+    /// The API key adapters should send, for `provider`. Prefers a
+    /// Settings/Keychain value over the build-time plist key — Anthropic
+    /// only, since the other providers have no `Secrets.xcconfig` entry.
     func requireAPIKey() throws -> String {
-        if let key = try apiKeyStore.savedKey(), !ConfigurationValue.isPlaceholder(key) {
+        if let key = try apiKeyStore.savedKey(for: provider), !ConfigurationValue.isPlaceholder(key) {
             return key
         }
-        if let key = bundle.object(forInfoDictionaryKey: "GhostAIAPIKey") as? String,
+        if provider == .anthropic,
+           let key = bundle.object(forInfoDictionaryKey: "GhostAIAPIKey") as? String,
            !ConfigurationValue.isPlaceholder(key) {
             return key
         }
-        throw NetworkError.missingConfiguration("GhostAIAPIKey")
+        throw NetworkError.missingConfiguration("\(provider.displayName) API key")
     }
 
     func send(_ endpoint: Endpoint) async throws -> Data {
-        var endpoint = endpoint
-        endpoint.headers["Authorization"] = "Bearer \(try requireAPIKey())"
-
         let (data, response) = try await session.data(for: endpoint.urlRequest(baseURL: baseURL))
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.invalidResponse
@@ -64,10 +75,8 @@ struct APIClient {
         AsyncThrowingStream { continuation in
             let task = Task {
                 do {
-                    var mutableEndpoint = endpoint
-                    mutableEndpoint.headers["Authorization"] = "Bearer \(try requireAPIKey())"
                     let (bytes, response) = try await session.bytes(
-                        for: mutableEndpoint.urlRequest(baseURL: baseURL)
+                        for: endpoint.urlRequest(baseURL: baseURL)
                     )
                     guard let httpResponse = response as? HTTPURLResponse,
                           (200..<300).contains(httpResponse.statusCode) else {

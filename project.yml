@@ -1,6 +1,6 @@
 name: Ghost
 options:
-  bundleIdPrefix: com.ghost.app
+  bundleIdPrefix: com.oaktreehouse.ghost
   deploymentTarget:
     iOS: "26.0"
   createIntermediateGroups: true
@@ -14,6 +14,8 @@ settings:
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     MARKETING_VERSION: "1.0.0"
     CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: RJ938N88J3
 
 configs:
   Debug: debug
@@ -34,7 +36,7 @@ targets:
       - sdk: HealthKit.framework
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.ghost.app
+        PRODUCT_BUNDLE_IDENTIFIER: com.oaktreehouse.ghost
         INFOPLIST_FILE: Ghost/Resources/Info.plist
         CODE_SIGN_ENTITLEMENTS: Ghost/Resources/Ghost.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

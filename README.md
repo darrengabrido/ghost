@@ -7,8 +7,10 @@ atmospheric aesthetic: it should feel less like "an app with a
 chatbot" and more like something present in the room with you.
 
 > This repository is a from-scratch, production-ready starting point —
-> architecture, folder structure, and design system are in place; the
-> actual voice/AI provider integrations are intentionally left pluggable.
+> architecture, folder structure, and design system are in place, with a
+> live Anthropic + on-device Speech integration. Every provider is behind
+> a protocol, so swapping or adding one is one adapter file, not a
+> rewrite.
 
 ## Features (planned)
 
@@ -19,8 +21,10 @@ chatbot" and more like something present in the room with you.
   dark, minimal canvas.
 - 🗂️ **Conversation history** — past conversations saved locally and
   searchable.
-- ⚙️ **Configurable voice & AI providers** — swap speech-to-text,
-  text-to-speech, and the underlying LLM without touching UI code.
+- ⚙️ **Configurable voice & AI providers** — pick Anthropic, OpenAI, xAI
+  Grok, or Google Gemini as the LLM right from Settings, each with its own
+  saved key; speech-to-text and text-to-speech are equally swappable
+  without touching UI code.
 - 🔒 **Privacy-conscious by default** — no analytics wired in, API keys
   never committed, microphone access explained plainly to the user.
 

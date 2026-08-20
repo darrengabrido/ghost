@@ -10,7 +10,11 @@ final class SwiftDataTimelineStore: TimelineStore {
 
     init() {
         do {
-            container = try ModelContainer(for: TimelineEvent.self)
+            let configuration = ModelConfiguration(
+                "Timeline",
+                schema: Schema([TimelineEvent.self])
+            )
+            container = try ModelContainer(for: TimelineEvent.self, configurations: configuration)
         } catch {
             fatalError("Failed to create SwiftData ModelContainer: \(error)")
         }

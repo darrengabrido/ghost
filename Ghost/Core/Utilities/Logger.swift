@@ -10,5 +10,5 @@ enum Log {
     static let networking = Logger(subsystem: subsystem, category: "networking")
     static let health = Logger(subsystem: subsystem, category: "health")
 
-    private static let subsystem = Bundle.main.bundleIdentifier ?? "com.ghost.app"
+    private static let subsystem = Bundle.main.bundleIdentifier ?? "com.oaktreehouse.ghost"
 }

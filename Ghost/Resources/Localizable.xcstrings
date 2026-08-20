@@ -51,6 +51,26 @@
         }
       }
     },
+    "history.noResults" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No conversations match your search."
+          }
+        }
+      }
+    },
+    "history.search.prompt" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search conversations"
+          }
+        }
+      }
+    },
     "history.title" : {
       "localizations" : {
         "en" : {
@@ -139,17 +159,67 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A key saved here is stored in the Keychain and used instead of the build-time Secrets.xcconfig value."
+            "value" : "Ghost keeps a separate key per provider, stored in the Keychain. For Anthropic, a saved key is used instead of the build-time Secrets.xcconfig value."
           }
         }
       }
     },
-    "settings.api.key.placeholder" : {
+    "settings.api.model" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Anthropic API key"
+            "value" : "Model"
+          }
+        }
+      }
+    },
+    "settings.api.model.custom.hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Or type any other model ID this provider supports."
+          }
+        }
+      }
+    },
+    "settings.api.model.custom.save" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use this model"
+          }
+        }
+      }
+    },
+    "settings.api.model.picker.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Model"
+          }
+        }
+      }
+    },
+    "settings.api.provider" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI provider"
+          }
+        }
+      }
+    },
+    "settings.api.provider.picker.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI Provider"
           }
         }
       }
