@@ -37,6 +37,11 @@ struct ConversationView: View {
             .animation(Theme.Motion.morph, value: hasTranscript)
         }
         .task { await viewModel.start() }
+        // Onboarding is behind this screen on the navigation stack, and the
+        // system back chevron happily took you there — crowding the History
+        // button in the first render and offering a "back" that means
+        // nothing. Once you're in, you're in.
+        .navigationBarBackButtonHidden(true)
         .toolbar { toolbarItems }
         .alert(
             "Something went wrong",

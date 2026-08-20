@@ -61,7 +61,7 @@ struct PulsingOrb: View {
         /// rest — Ghost is never fully absent, only quiet.
         var glow: Double {
             switch self {
-            case .idle: 0.20
+            case .idle: 0.34
             case .listening: 0.62
             case .thinking: 0.44
             case .speaking: 0.56
