@@ -1,5 +1,5 @@
-@testable import Ghost
 import AVFoundation
+@testable import Ghost
 
 /// Scripted `TranscriptionProvider` for exercising `TranscriptionService`
 /// logic without a real speech-to-text engine. Ignores the audio it's

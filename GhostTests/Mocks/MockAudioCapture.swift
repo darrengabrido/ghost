@@ -1,5 +1,5 @@
-@testable import Ghost
 import AVFoundation
+@testable import Ghost
 
 /// Scripted `AudioCapture` for exercising `TranscriptionService` without
 /// touching `AVAudioEngine`. Never yields real buffers — provider mocks

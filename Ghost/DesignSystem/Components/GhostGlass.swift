@@ -1,21 +1,34 @@
 import SwiftUI
 
-/// Liquid Glass card on iOS 26; falls back to `BlurBackground` on earlier
-/// versions so Ghost can keep an iOS 17 deployment target.
+/// A Liquid Glass surface, tuned for Ghost.
 ///
-/// Liquid Glass APIs are stripped with `#if compiler(>=6.2)` so CI on
-/// Xcode 16 (Swift 6.0) still compiles; both branches of `#available`
-/// are type-checked against the current SDK.
+/// Now that the deployment target is iOS 26 this is the real thing — no
+/// `#available` branches, no `.ultraThinMaterial` impersonation. What's
+/// added on top of the system effect is the hairline: a bone-white edge
+/// that runs bright at the top-leading corner and fades to nothing at the
+/// bottom-trailing one, as though a single low light sat above the frame.
+/// System glass alone reads as translucent; the directional hairline is
+/// what makes it read as a cut edge.
+///
+/// Honours Reduce Transparency by falling back to opaque surfaces. An
+/// app built almost entirely out of glass is exactly the app that has to
+/// answer that setting properly.
 struct GhostGlass<Content: View>: View {
     enum Style {
+        /// Neutral glass. The default for anything the interface owns.
         case regular
+        /// Reacts to touch — use for anything tappable.
         case interactive
-        case accent
+        /// Maple-tinted. Reserved for surfaces that are Ghost speaking,
+        /// so the tint always means "this is the presence, not the app".
+        case ember
     }
 
     var style: Style = .regular
     var cornerRadius: CGFloat = Theme.Radius.lg
     @ViewBuilder var content: Content
+
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     init(
         style: Style = .regular,
@@ -28,41 +41,38 @@ struct GhostGlass<Content: View>: View {
     }
 
     var body: some View {
-        #if compiler(>=6.2)
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-        if #available(iOS 26, *) {
-            content
-                .glassEffect(glass, in: shape)
-                .overlay {
-                    shape.strokeBorder(Color.ghostTextPrimary.opacity(0.07), lineWidth: 1)
-                }
-        } else {
-            fallback
+
+        Group {
+            if reduceTransparency {
+                content.background(opaqueFill, in: shape)
+            } else {
+                content.glassEffect(glass, in: shape)
+            }
         }
-        #else
-        fallback
-        #endif
+        .overlay {
+            shape.strokeBorder(Theme.hairlineGradient, lineWidth: 0.8)
+        }
     }
 
-    private var fallback: some View {
-        content
-            .background(BlurBackground(cornerRadius: cornerRadius))
-    }
-
-    #if compiler(>=6.2)
-    @available(iOS 26, *)
     private var glass: Glass {
         switch style {
         case .regular: .regular
         case .interactive: .regular.interactive()
-        case .accent: .regular.tint(Color.ghostAccent)
+        case .ember: .regular.tint(Color.ghostMaple.opacity(0.26))
         }
     }
-    #endif
+
+    private var opaqueFill: Color {
+        switch style {
+        case .regular, .interactive: .ghostAshRaised
+        case .ember: .ghostAshEmber
+        }
+    }
 }
 
-/// Groups sibling glass pieces so they share lighting. Identity on
-/// systems that don't have Liquid Glass.
+/// Groups sibling glass surfaces so they share one lighting model and can
+/// morph into each other rather than cross-fading.
 struct GhostGlassContainer<Content: View>: View {
     var spacing: CGFloat = 0
     @ViewBuilder var content: Content
@@ -73,16 +83,33 @@ struct GhostGlassContainer<Content: View>: View {
     }
 
     var body: some View {
-        #if compiler(>=6.2)
-        if #available(iOS 26, *) {
-            GlassEffectContainer(spacing: spacing) {
-                content
-            }
-        } else {
+        GlassEffectContainer(spacing: spacing) {
             content
         }
-        #else
-        content
-        #endif
+    }
+}
+
+#Preview {
+    ZStack {
+        GhostAtmosphereBackground()
+        GhostGlassContainer(spacing: Theme.Spacing.lg) {
+            VStack(spacing: Theme.Spacing.lg) {
+                GhostGlass {
+                    Text("Regular")
+                        .font(.ghostBody)
+                        .foregroundStyle(Color.ghostTextPrimary)
+                        .frame(maxWidth: .infinity)
+                        .padding(Theme.Spacing.lg)
+                }
+                GhostGlass(style: .ember) {
+                    Text("Ember")
+                        .font(.ghostVoice)
+                        .foregroundStyle(Color.ghostTextPrimary)
+                        .frame(maxWidth: .infinity)
+                        .padding(Theme.Spacing.lg)
+                }
+            }
+            .padding(Theme.Spacing.lg)
+        }
     }
 }
