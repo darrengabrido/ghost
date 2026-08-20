@@ -2,7 +2,7 @@ import SwiftUI
 
 @main
 struct GhostApp: App {
-    @State private var environment = AppEnvironment.live()
+    @State private var environment = AppEnvironment.resolved()
 
     var body: some Scene {
         WindowGroup {
@@ -27,7 +27,7 @@ private struct AppRootView: View {
                 router.destination(for: route, environment: environment)
             }
         }
-        .tint(Color.ghostAccent)
+        .tint(Color.ghostAccentText)
         .background(Color.ghostBackground.ignoresSafeArea())
     }
 }

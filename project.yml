@@ -2,7 +2,7 @@ name: Ghost
 options:
   bundleIdPrefix: com.oaktreehouse.ghost
   deploymentTarget:
-    iOS: "17.0"
+    iOS: "26.0"
   createIntermediateGroups: true
   groupSortPosition: top
   generateEmptyDirectories: true
@@ -25,7 +25,7 @@ targets:
   Ghost:
     type: application
     platform: iOS
-    deploymentTarget: "17.0"
+    deploymentTarget: "26.0"
     sources:
       - path: Ghost
         excludes:
@@ -53,7 +53,7 @@ targets:
   GhostTests:
     type: bundle.unit-test
     platform: iOS
-    deploymentTarget: "17.0"
+    deploymentTarget: "26.0"
     sources:
       - path: GhostTests
     dependencies:
@@ -65,7 +65,7 @@ targets:
   GhostUITests:
     type: bundle.ui-testing
     platform: iOS
-    deploymentTarget: "17.0"
+    deploymentTarget: "26.0"
     sources:
       - path: GhostUITests
     dependencies:

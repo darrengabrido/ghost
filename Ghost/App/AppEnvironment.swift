@@ -17,6 +17,16 @@ struct AppEnvironment {
     let healthDataProvider: HealthDataProvider
     let timelineStore: TimelineStore
 
+    /// The environment the app actually launches with.
+    ///
+    /// UI tests get the mock stack. The live one reaches HealthKit on the
+    /// conversation screen, which puts a system permission sheet over the
+    /// first frame — fatal for screenshots, and non-deterministic for any
+    /// test that has to see what's behind it.
+    static func resolved() -> AppEnvironment {
+        LaunchFlags.isUITesting ? .uiTesting() : .live()
+    }
+
     static func live() -> AppEnvironment {
         let userPreferences = UserDefaultsPreferencesStore()
         let apiKeyStore = KeychainAPIKeyStore()
@@ -52,6 +62,43 @@ struct AppEnvironment {
         case .grok: return GrokAIConversationService(client: client, model: model)
         case .gemini: return GeminiAIConversationService(client: client, model: model)
         }
+    }
+
+    /// Mocks, plus seeded history — the History rows are a redesigned
+    /// surface, and an empty state shows none of them.
+    static func uiTesting() -> AppEnvironment {
+        AppEnvironment(
+            voiceEngine: MockVoiceEngine(),
+            aiConversationService: MockAIConversationService(),
+            conversationStore: InMemoryConversationStore(seeded: sampleConversations),
+            userPreferences: InMemoryUserPreferencesStore(),
+            apiKeyStore: InMemoryAPIKeyStore(),
+            healthDataProvider: MockHealthDataProvider(),
+            timelineStore: InMemoryTimelineStore()
+        )
+    }
+
+    /// Fixed timestamps, not offsets from `now`. These render as visible
+    /// dates in the History rows, and a relative date would change the
+    /// committed screenshot on every CI run.
+    private static var sampleConversations: [ConversationRecord] {
+        [
+            ConversationRecord(
+                title: "What the wind sounded like from the ridge",
+                createdAt: Date(timeIntervalSince1970: 1_775_995_200),
+                transcript: ""
+            ),
+            ConversationRecord(
+                title: "Sleep, and why last night ran shorter",
+                createdAt: Date(timeIntervalSince1970: 1_775_908_800),
+                transcript: ""
+            ),
+            ConversationRecord(
+                title: "The long walk after the storm",
+                createdAt: Date(timeIntervalSince1970: 1_775_739_600),
+                transcript: ""
+            )
+        ]
     }
 
     static func preview() -> AppEnvironment {

@@ -17,15 +17,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Select Xcode
-        run: |
-          echo "Available Xcodes:"
-          ls /Applications | grep -i Xcode || true
-          XCODE_APP=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort | tail -1)
-          echo "Using ${XCODE_APP}"
-          sudo xcode-select -s "${XCODE_APP}/Contents/Developer"
-          xcodebuild -version
-          xcodebuild -showsdks
-          xcrun simctl list runtimes
+        # NOTE: pinned to macos-15 deliberately. `macos-26` is not a valid
+        # runner label for this account — jobs are rejected before they are
+        # created, which reads as an instant failure with no logs at all.
+        run: ./scripts/select-xcode.sh
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -39,37 +34,57 @@ jobs:
       - name: Build
         run: |
           set -o pipefail
-          xcodebuild -project Ghost.xcodeproj -scheme Ghost \
+          # The diagnostics have to be echoed on the *failure* path. Running
+          # the grep as a following line only ever reported on success, so a
+          # broken build surfaced as "3 failures" with the two actual error
+          # lines buried in ~1000 lines of SwiftCompile noise.
+          if ! xcodebuild -project Ghost.xcodeproj -scheme Ghost \
             -destination 'generic/platform=iOS Simulator' \
-            -skipMacroValidation clean build 2>&1 | tee "$RUNNER_TEMP/xcodebuild-build.log"
+            -skipMacroValidation clean build 2>&1 | tee "$RUNNER_TEMP/xcodebuild-build.log"; then
+            echo "::group::Compiler diagnostics"
+            grep -E "error:|warning:" "$RUNNER_TEMP/xcodebuild-build.log" || echo "(no diagnostic lines found)"
+            echo "::endgroup::"
+            exit 1
+          fi
           grep -E "error:|warning:" "$RUNNER_TEMP/xcodebuild-build.log" || true
 
       - name: Test
+        env:
+          # Kept in `env:` rather than inline in `run:` on purpose. A heredoc
+          # whose body sits at column 0 terminates the enclosing YAML block
+          # scalar, which makes the whole workflow file unparseable — that is
+          # exactly what commit 33afcdd introduced, and why every run from
+          # then until now produced zero jobs and no logs. A block scalar
+          # under `env:` is indented with the document, and YAML strips that
+          # indentation before Python ever sees it.
+          SELECT_DEVICE: |
+            import json, sys
+
+            groups = json.load(sys.stdin).get("devices", {}).values()
+            names = [
+                device["name"]
+                for group in groups
+                for device in group
+                if device.get("isAvailable") and "iPhone" in device.get("name", "")
+            ]
+            preferred = ("iPhone 17", "iPhone 16", "iPhone")
+            print(next(
+                (name for prefix in preferred for name in names if name.startswith(prefix)),
+                names[0] if names else "iPhone 16",
+            ))
         run: |
           set -o pipefail
-          DEVICE_NAME=$(python3 - <<'PY'
-import json, subprocess
-data = json.loads(subprocess.check_output(
-    ["xcrun", "simctl", "list", "devices", "available", "-j"]
-))
-preferred = ("iPhone 16", "iPhone 17", "iPhone")
-found = []
-for devices in data.get("devices", {}).values():
-    for device in devices:
-        if device.get("isAvailable") and "iPhone" in device.get("name", ""):
-            found.append(device["name"])
-for name in preferred:
-    for candidate in found:
-        if candidate.startswith(name):
-            print(candidate)
-            raise SystemExit
-print(found[0] if found else "iPhone 16")
-PY
-          )
+          DEVICE_NAME=$(xcrun simctl list devices available -j | python3 -c "$SELECT_DEVICE")
           echo "Testing on ${DEVICE_NAME}"
-          xcodebuild -project Ghost.xcodeproj -scheme Ghost \
+          if ! xcodebuild -project Ghost.xcodeproj -scheme Ghost \
             -destination "platform=iOS Simulator,name=${DEVICE_NAME}" \
-            -skipMacroValidation test 2>&1 | tee "$RUNNER_TEMP/xcodebuild-test.log"
+            -skipMacroValidation test 2>&1 | tee "$RUNNER_TEMP/xcodebuild-test.log"; then
+            echo "::group::Test failures"
+            grep -E "error:|Test Case .* failed|\*\* TEST .* \*\*" "$RUNNER_TEMP/xcodebuild-test.log" \
+              | sort -u || echo "(none found)"
+            echo "::endgroup::"
+            exit 1
+          fi
 
   lint:
     runs-on: macos-15
@@ -79,3 +94,103 @@ PY
         run: brew install swiftlint
       - name: Run SwiftLint
         run: swiftlint --strict
+
+  screenshots:
+    # The reason this job exists: Ghost is an atmospheric app, the repo's PR
+    # template requires recordings for any UI change, and the redesign was
+    # authored on Linux where no simulator can run. This is the only way a
+    # frame of it gets rendered at all.
+    runs-on: macos-15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The branch tip, not the PR merge ref — this job pushes back.
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Select Xcode
+        run: ./scripts/select-xcode.sh
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Provide placeholder secrets config
+        run: cp Ghost/Resources/Config/Secrets.xcconfig.example Ghost/Resources/Config/Secrets.xcconfig
+
+      - name: Capture screens on iPhone 17 Pro Max
+        run: |
+          set -o pipefail
+          DEVICE="iPhone 17 Pro Max"
+          DEVICE_ID=$(xcrun simctl list devices available \
+            | grep "${DEVICE} (" | head -1 \
+            | sed -E 's/.*\(([0-9A-Fa-f-]{36})\).*/\1/')
+          if [ -z "${DEVICE_ID}" ]; then
+            echo "::error::No '${DEVICE}' simulator on this runner. Available iPhones:"
+            xcrun simctl list devices available | grep iPhone || true
+            exit 1
+          fi
+          echo "Using ${DEVICE} (${DEVICE_ID})"
+
+          # Boot first so the status bar can be pinned. Without this the
+          # real clock is rendered into every shot, so the committed images
+          # differ on every run for no design reason.
+          xcrun simctl boot "${DEVICE_ID}" || true
+          xcrun simctl bootstatus "${DEVICE_ID}" -b || true
+          xcrun simctl status_bar "${DEVICE_ID}" override \
+            --time "9:41" \
+            --batteryState charged --batteryLevel 100 \
+            --cellularMode active --cellularBars 4 \
+            --wifiMode active --wifiBars 3
+
+          if ! xcodebuild -project Ghost.xcodeproj -scheme Ghost \
+            -destination "platform=iOS Simulator,id=${DEVICE_ID}" \
+            -only-testing:GhostUITests/ScreenshotTests \
+            -resultBundlePath "$RUNNER_TEMP/Screens.xcresult" \
+            -skipMacroValidation test 2>&1 | tee "$RUNNER_TEMP/screens.log"; then
+            echo "::group::Failures"
+            grep -E "error:|Test Case .* failed|\*\* TEST .* \*\*" "$RUNNER_TEMP/screens.log" \
+              | sort -u || echo "(none found)"
+            echo "::endgroup::"
+            exit 1
+          fi
+
+      - name: Export screenshots
+        run: |
+          mkdir -p exported
+          # Falls back to shipping the raw result bundle if the export CLI
+          # shape differs — better a bundle the user can open than no artifact.
+          if ! xcrun xcresulttool export attachments \
+            --path "$RUNNER_TEMP/Screens.xcresult" \
+            --output-path exported; then
+            echo "::warning::Attachment export failed; uploading the raw .xcresult instead."
+            cp -R "$RUNNER_TEMP/Screens.xcresult" exported/
+          fi
+          ls -lR exported
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ghost-screens-iphone-17-pro-max
+          path: exported
+          if-no-files-found: error
+
+      - name: Downscale for the repo
+        run: ./scripts/collect-screenshots.sh exported docs/screenshots
+
+      - name: Commit screenshots to the branch
+        if: github.event_name == 'pull_request'
+        run: |
+          git add docs/screenshots
+          if git diff --cached --quiet; then
+            echo "Screenshots unchanged — nothing to commit."
+            exit 0
+          fi
+          # [skip ci] keeps this from triggering the run that would produce
+          # the next identical commit.
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -m "Refresh iPhone 17 Pro Max screenshots [skip ci]"
+          git push origin "HEAD:${{ github.head_ref }}"
