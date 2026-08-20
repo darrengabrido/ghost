@@ -1,4 +1,7 @@
-.PHONY: generate build test lint format clean open
+.PHONY: generate build run test lint format clean open
+
+# Override with: make run SIMULATOR='iPhone 17 Pro'
+SIMULATOR ?= iPhone 17 Pro Max
 
 generate:
 	xcodegen generate
@@ -10,9 +13,12 @@ build: generate
 	xcodebuild -project Ghost.xcodeproj -scheme Ghost \
 		-destination 'generic/platform=iOS Simulator' build | xcpretty || true
 
+run: generate
+	@scripts/run-simulator.sh "$(SIMULATOR)"
+
 test: generate
 	xcodebuild -project Ghost.xcodeproj -scheme Ghost \
-		-destination 'platform=iOS Simulator,name=iPhone 16' test | xcpretty || true
+		-destination 'platform=iOS Simulator,name=$(SIMULATOR)' test | xcpretty || true
 
 lint:
 	swiftlint
