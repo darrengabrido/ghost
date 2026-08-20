@@ -27,6 +27,12 @@ struct BreathingModifier: ViewModifier {
     }
 
     private func sync() {
+        guard !LaunchFlags.isUITesting else {
+            // Screenshots hold the fully-open pose, unanimated, so the frame
+            // is the same one every run.
+            withAnimation(nil) { isExpanded = true }
+            return
+        }
         guard isActive, !reduceMotion else {
             withAnimation(Theme.Motion.quick) { isExpanded = false }
             return

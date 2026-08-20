@@ -101,8 +101,13 @@ jobs:
     # authored on Linux where no simulator can run. This is the only way a
     # frame of it gets rendered at all.
     runs-on: macos-15
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The branch tip, not the PR merge ref — this job pushes back.
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Select Xcode
         run: ./scripts/select-xcode.sh
@@ -120,13 +125,29 @@ jobs:
         run: |
           set -o pipefail
           DEVICE="iPhone 17 Pro Max"
-          if ! xcrun simctl list devices available | grep -q "${DEVICE}"; then
+          DEVICE_ID=$(xcrun simctl list devices available \
+            | grep "${DEVICE} (" | head -1 \
+            | sed -E 's/.*\(([0-9A-Fa-f-]{36})\).*/\1/')
+          if [ -z "${DEVICE_ID}" ]; then
             echo "::error::No '${DEVICE}' simulator on this runner. Available iPhones:"
             xcrun simctl list devices available | grep iPhone || true
             exit 1
           fi
+          echo "Using ${DEVICE} (${DEVICE_ID})"
+
+          # Boot first so the status bar can be pinned. Without this the
+          # real clock is rendered into every shot, so the committed images
+          # differ on every run for no design reason.
+          xcrun simctl boot "${DEVICE_ID}" || true
+          xcrun simctl bootstatus "${DEVICE_ID}" -b || true
+          xcrun simctl status_bar "${DEVICE_ID}" override \
+            --time "9:41" \
+            --batteryState charged --batteryLevel 100 \
+            --cellularMode active --cellularBars 4 \
+            --wifiMode active --wifiBars 3
+
           if ! xcodebuild -project Ghost.xcodeproj -scheme Ghost \
-            -destination "platform=iOS Simulator,name=${DEVICE}" \
+            -destination "platform=iOS Simulator,id=${DEVICE_ID}" \
             -only-testing:GhostUITests/ScreenshotTests \
             -resultBundlePath "$RUNNER_TEMP/Screens.xcresult" \
             -skipMacroValidation test 2>&1 | tee "$RUNNER_TEMP/screens.log"; then
@@ -139,19 +160,37 @@ jobs:
 
       - name: Export screenshots
         run: |
-          mkdir -p screenshots
+          mkdir -p exported
           # Falls back to shipping the raw result bundle if the export CLI
           # shape differs — better a bundle the user can open than no artifact.
           if ! xcrun xcresulttool export attachments \
             --path "$RUNNER_TEMP/Screens.xcresult" \
-            --output-path screenshots; then
+            --output-path exported; then
             echo "::warning::Attachment export failed; uploading the raw .xcresult instead."
-            cp -R "$RUNNER_TEMP/Screens.xcresult" screenshots/
+            cp -R "$RUNNER_TEMP/Screens.xcresult" exported/
           fi
-          ls -lR screenshots
+          ls -lR exported
 
       - uses: actions/upload-artifact@v4
         with:
           name: ghost-screens-iphone-17-pro-max
-          path: screenshots
+          path: exported
           if-no-files-found: error
+
+      - name: Downscale for the repo
+        run: ./scripts/collect-screenshots.sh exported docs/screenshots
+
+      - name: Commit screenshots to the branch
+        if: github.event_name == 'pull_request'
+        run: |
+          git add docs/screenshots
+          if git diff --cached --quiet; then
+            echo "Screenshots unchanged — nothing to commit."
+            exit 0
+          fi
+          # [skip ci] keeps this from triggering the run that would produce
+          # the next identical commit.
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -m "Refresh iPhone 17 Pro Max screenshots [skip ci]"
+          git push origin "HEAD:${{ github.head_ref }}"

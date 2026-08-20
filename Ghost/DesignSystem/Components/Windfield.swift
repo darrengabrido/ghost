@@ -73,7 +73,7 @@ struct Windfield: View {
         TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: reduceMotion)) { timeline in
             // Hoisted out of the render closures so `Canvas` captures only
             // values, never `self`.
-            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+            let time = reduceMotion ? 0 : AtmosphereClock.seconds(timeline.date)
             let frame = WindFrame(
                 ember: ember, ash: ash, intensity: intensity,
                 tilt: tilt, time: time, elongation: 2.2

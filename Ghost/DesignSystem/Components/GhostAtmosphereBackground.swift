@@ -81,7 +81,7 @@ private struct DriftingFog: View {
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 20.0, paused: reduceMotion)) { timeline in
-            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+            let time = reduceMotion ? 0 : AtmosphereClock.seconds(timeline.date)
             ZStack {
                 ForEach(Self.layers) { layer in
                     glow(for: layer, at: time)

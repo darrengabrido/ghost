@@ -24,11 +24,8 @@ struct AppEnvironment {
     /// first frame — fatal for screenshots, and non-deterministic for any
     /// test that has to see what's behind it.
     static func resolved() -> AppEnvironment {
-        ProcessInfo.processInfo.arguments.contains(Self.uiTestingArgument) ? .uiTesting() : .live()
+        LaunchFlags.isUITesting ? .uiTesting() : .live()
     }
-
-    /// Passed by `ScreenshotTests` via `XCUIApplication.launchArguments`.
-    static let uiTestingArgument = "--ui-testing"
 
     static func live() -> AppEnvironment {
         let userPreferences = UserDefaultsPreferencesStore()
@@ -67,22 +64,24 @@ struct AppEnvironment {
         )
     }
 
+    /// Fixed timestamps, not offsets from `now`. These render as visible
+    /// dates in the History rows, and a relative date would change the
+    /// committed screenshot on every CI run.
     private static var sampleConversations: [ConversationRecord] {
-        let now = Date.now
-        return [
+        [
             ConversationRecord(
                 title: "What the wind sounded like from the ridge",
-                createdAt: now.addingTimeInterval(-2 * 3_600),
+                createdAt: Date(timeIntervalSince1970: 1_775_995_200),
                 transcript: ""
             ),
             ConversationRecord(
                 title: "Sleep, and why last night ran shorter",
-                createdAt: now.addingTimeInterval(-26 * 3_600),
+                createdAt: Date(timeIntervalSince1970: 1_775_908_800),
                 transcript: ""
             ),
             ConversationRecord(
                 title: "The long walk after the storm",
-                createdAt: now.addingTimeInterval(-73 * 3_600),
+                createdAt: Date(timeIntervalSince1970: 1_775_739_600),
                 transcript: ""
             )
         ]

@@ -191,7 +191,7 @@ struct PulsingOrb: View {
     /// so starting this only on appear would leave the rotation repeating
     /// forever for a user who just asked for it to stop.
     private func syncDrift() {
-        guard !reduceMotion else {
+        guard !reduceMotion, !LaunchFlags.isUITesting else {
             withAnimation(nil) { driftAngle = 0 }
             return
         }
