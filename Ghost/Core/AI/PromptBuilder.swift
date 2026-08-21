@@ -49,6 +49,35 @@ enum PromptBuilder {
         """
     }
 
+    /// The nudge Ghost is handed when *it* is the one opening the exchange.
+    /// The decision to speak has already been made by `SpeakingDecision`; this
+    /// only carries *why*, which the prompt layer otherwise has no way to say —
+    /// today it only ever sees a verbatim message history plus an optional
+    /// health blurb.
+    ///
+    /// Delivered as a user-role turn that is never displayed, spoken back, or
+    /// persisted: it is an instruction to Ghost, not something the user said.
+    /// Both variants restate the standing no-raw-numbers rule, because a
+    /// proactive opener is exactly where reciting a step count would be most
+    /// tempting and most wrong.
+    static func proactiveOpening(for reason: SpeakingDecision.SpeakReason) -> String {
+        switch reason {
+        case .userReturned:
+            """
+            Speak first. The user has just come back after being away a while. \
+            Open with something short and warm — a sentence or two. Don't \
+            summarize what they missed, don't recite any numbers, and don't ask \
+            them to catch you up.
+            """
+        case .longSilenceCheckIn:
+            """
+            Speak first. It has been quiet for a while and you've decided to \
+            check in. Say one short, unprompted thing — light, not a question \
+            they owe you an answer to, and no numbers recited back at them.
+            """
+        }
+    }
+
     static func chatTurns(from messages: [Message], healthContext: String? = nil) -> [ChatTurn] {
         [ChatTurn(role: "system", content: systemPrompt(healthContext: healthContext))] + messages.map { message in
             ChatTurn(role: message.speaker == .user ? "user" : "assistant", content: message.text)
