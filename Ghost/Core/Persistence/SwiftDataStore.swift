@@ -1,6 +1,18 @@
 import Foundation
 import SwiftData
 
+/// The title a saved conversation gets.
+///
+/// Ghost can now open a conversation itself (see `SpeakingDecision`), which
+/// puts a Ghost message at index 0 — and titling a History row with a generic
+/// proactive greeting would make every such row read the same. So the title
+/// comes from what the *user* first said, falling back to the opening message
+/// only when they never replied.
+private func conversationTitle(for messages: [Message]) -> String? {
+    guard let source = messages.first(where: { $0.speaker == .user }) ?? messages.first else { return nil }
+    return String(source.text.prefix(48))
+}
+
 /// Default `ConversationStore` backed by SwiftData. Owns its own
 /// `ModelContainer` so the rest of the app doesn't need to know about
 /// SwiftData at all — only this file would change if persistence moved
@@ -22,14 +34,14 @@ final class SwiftDataConversationStore: ConversationStore {
     }
 
     func save(_ messages: [Message]) async throws {
-        guard let first = messages.first else { return }
+        guard let title = conversationTitle(for: messages) else { return }
 
         let transcript = messages
             .map { "\($0.speaker == .user ? "You" : "Ghost"): \($0.text)" }
             .joined(separator: "\n")
 
         let record = ConversationRecord(
-            title: String(first.text.prefix(48)),
+            title: title,
             transcript: transcript
         )
         container.mainContext.insert(record)
@@ -68,8 +80,8 @@ final class InMemoryConversationStore: ConversationStore {
     }
 
     func save(_ messages: [Message]) async throws {
-        guard let first = messages.first else { return }
-        records.append(ConversationRecord(title: String(first.text.prefix(48)), transcript: ""))
+        guard let title = conversationTitle(for: messages) else { return }
+        records.append(ConversationRecord(title: title, transcript: ""))
     }
 
     func fetchAll() async throws -> [ConversationRecord] {
