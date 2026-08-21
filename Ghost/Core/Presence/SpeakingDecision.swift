@@ -41,6 +41,8 @@ enum SpeakingDecision {
         case noSignal
         case tooSoonSinceLastInteraction
         case tooSoonSinceLastProactiveSpeech
+        /// Ghost already reached out and the user hasn't answered yet.
+        case awaitingReply
         case withinQuietHours
     }
 
@@ -102,6 +104,21 @@ enum SpeakingDecision {
         if let lastProactiveSpeechAt = input.lastProactiveSpeechAt,
            input.now.timeIntervalSince(lastProactiveSpeechAt) < proactiveSpeechCooldown {
             return .stayQuiet(.tooSoonSinceLastProactiveSpeech)
+        }
+
+        // One opener per silence. Ghost has already reached out and the user
+        // hasn't said anything since, so reaching out again is nagging however
+        // much time has passed.
+        //
+        // This is load-bearing rather than belt-and-braces: `HealthKitDataProvider`
+        // stamps every aggregate `date: .now`, and nothing dedupes them, so a
+        // sync always writes events newer than the watermark below. Without
+        // this rule the "unexamined signal" test is satisfied on every screen
+        // open, and a user who never replies gets a fresh opener each time the
+        // cooldown lapses — indefinitely. It also settles the scoping doc's
+        // open question about a daily cap, in the conservative direction.
+        if let lastProactiveSpeechAt = input.lastProactiveSpeechAt, lastProactiveSpeechAt > lastInteractionAt {
+            return .stayQuiet(.awaitingReply)
         }
 
         // "Unexamined" means it landed after the last moment Ghost or the user

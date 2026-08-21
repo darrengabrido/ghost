@@ -193,6 +193,48 @@ struct SpeakingDecisionTests {
         #expect(outcome == .speak(.longSilenceCheckIn))
     }
 
+    /// Ghost reached out and the user never answered. Once the proactive
+    /// cooldown lapses every other gate is satisfied again, so without this
+    /// rule Ghost would re-open the same conversation hourly, forever — which
+    /// is the exact "needy, checklist-y" failure the whole feature exists to
+    /// avoid.
+    @Test
+    func afterAnUnansweredOpenerGhostStaysQuietEvenOnceTheCooldownLapses() throws {
+        let now = try fixedDate(hour: 14)
+
+        let outcome = SpeakingDecision.evaluate(
+            SpeakingDecision.Input(
+                recentTimelineEvents: [event(at: now - minutes(1))],
+                now: now,
+                lastInteractionAt: now - days(3),
+                lastProactiveSpeechAt: now - hours(2),
+                quietHours: nil
+            )
+        )
+
+        #expect(outcome == .stayQuiet(.awaitingReply))
+    }
+
+    /// The other side of that rule: once the user actually says something,
+    /// their reply becomes the newer moment and Ghost is free to open again on
+    /// the next qualifying silence.
+    @Test
+    func onceTheUserRepliesGhostMayOpenAgainOnTheNextSilence() throws {
+        let now = try fixedDate(hour: 14)
+
+        let outcome = SpeakingDecision.evaluate(
+            SpeakingDecision.Input(
+                recentTimelineEvents: [event(at: now - minutes(1))],
+                now: now,
+                lastInteractionAt: now - days(2),
+                lastProactiveSpeechAt: now - days(3),
+                quietHours: nil
+            )
+        )
+
+        #expect(outcome == .speak(.userReturned))
+    }
+
     /// A fresh install hasn't "returned" from anywhere — onboarding owns the
     /// first hello.
     @Test

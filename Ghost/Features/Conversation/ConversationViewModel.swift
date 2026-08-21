@@ -18,6 +18,7 @@ final class ConversationViewModel {
     private let interactionLog: InteractionLog
     private let quietHours: QuietHours?
     private var listenTask: Task<Void, Never>?
+    private var proactiveTask: Task<Void, Never>?
     private var healthContext: String?
 
     init(
@@ -72,7 +73,12 @@ final class ConversationViewModel {
         case .idle:
             startListening()
         case .thinking:
-            break
+            // A proactive opener is interruptible; a reply the user actually
+            // asked for is not. Being stuck behind a network call you didn't
+            // request is worse than being stuck behind your own.
+            guard proactiveTask != nil else { return }
+            cancelProactiveSpeech()
+            startListening()
         }
     }
 
@@ -179,7 +185,26 @@ final class ConversationViewModel {
         )
 
         guard case .speak(let reason) = outcome else { return }
-        await speakProactively(reason)
+
+        // Unstructured, so `micTapped()` has a handle to cancel — but wrapped
+        // so that cancelling `start()` (the view's `.task`, on disappear) still
+        // reaches it. Otherwise navigating away mid-generation would leave
+        // Ghost to speak into a screen that's gone.
+        let task = Task { await speakProactively(reason) }
+        proactiveTask = task
+        await withTaskCancellationHandler {
+            await task.value
+        } onCancel: {
+            task.cancel()
+        }
+        proactiveTask = nil
+    }
+
+    /// Interrupts an in-flight proactive opener. Safe to call when none is
+    /// running.
+    private func cancelProactiveSpeech() {
+        proactiveTask?.cancel()
+        proactiveTask = nil
     }
 
     /// Ghost opening the exchange itself. Mirrors `handleUserUtterance`, with
@@ -198,17 +223,19 @@ final class ConversationViewModel {
             var reply = ""
             let stream = aiConversationService.streamResponse(to: messages + [nudge], healthContext: healthContext)
             for try await token in stream {
+                if Task.isCancelled { break }
                 reply += token
             }
 
             let spoken = reply.trimmingCharacters(in: .whitespacesAndNewlines)
 
-            // The user may have tapped the mic while the reply was streaming.
-            // This is the whole reentrancy guard v1 needs: `voiceEngine.speak`
-            // is never reached from a state this method no longer owns, so a
-            // proactive utterance can't yank the audio session out from under a
-            // live recognition stream. No lock, no actor, no queue.
-            if !spoken.isEmpty, orbState == .thinking {
+            // The user may have tapped the mic while the reply was streaming,
+            // which cancels this task and starts recognition. Checking both
+            // cancellation and the orb state is what keeps `voiceEngine.speak`
+            // from ever being reached out of a state this method still owns —
+            // so a proactive utterance can't yank the audio session out from
+            // under a live recognition stream. No lock, no actor, no queue.
+            if !Task.isCancelled, !spoken.isEmpty, orbState == .thinking {
                 messages.append(Message(speaker: .ghost, text: spoken))
                 orbState = .speaking
                 try await voiceEngine.speak(spoken)

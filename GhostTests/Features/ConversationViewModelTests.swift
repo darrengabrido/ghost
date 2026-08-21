@@ -181,6 +181,75 @@ struct ConversationViewModelTests {
         #expect(viewModel.messages.isEmpty)
         #expect(interactionLog.lastProactiveSpeechAt == nil)
     }
+
+    /// Tapping the mic while an unrequested opener is still generating has to
+    /// interrupt it. Before this was cancellable the mic was simply dead until
+    /// a network call the user never asked for finished.
+    @Test
+    func micTappedDuringAProactiveOpenerInterruptsIt() async throws {
+        let voiceEngine = SilentVoiceEngine()
+        let interactionLog = InMemoryInteractionLog(lastInteractionAt: Date.now.addingTimeInterval(-3 * 86_400))
+        let viewModel = ConversationViewModel(
+            voiceEngine: voiceEngine,
+            aiConversationService: HangingAIConversationService(),
+            conversationStore: InMemoryConversationStore(),
+            preferences: InMemoryUserPreferencesStore(),
+            healthDataProvider: MockHealthDataProvider(),
+            timelineStore: InMemoryTimelineStore(),
+            interactionLog: interactionLog,
+            quietHours: nil
+        )
+
+        let startTask = Task { await viewModel.start() }
+        try await waitUntil { viewModel.orbState == .thinking }
+
+        viewModel.micTapped()
+        await startTask.value
+
+        #expect(viewModel.orbState == .listening)
+        #expect(viewModel.messages.isEmpty)
+        #expect(voiceEngine.spokenTexts.isEmpty)
+        #expect(interactionLog.lastProactiveSpeechAt == nil)
+    }
+}
+
+/// Streams nothing and never finishes, holding Ghost in `.thinking` until the
+/// consuming task is cancelled. Deliberately not `MockAIConversationService`,
+/// whose reply lands on a timer — interrupting a race is not a test.
+private final class HangingAIConversationService: AIConversationService, @unchecked Sendable {
+    private let lock = NSLock()
+    private var continuation: AsyncThrowingStream<String, Error>.Continuation?
+
+    func streamResponse(to messages: [Message], healthContext: String?) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in
+            // Retained, or the stream would finish the moment it deallocates.
+            lock.lock()
+            self.continuation = continuation
+            lock.unlock()
+        }
+    }
+}
+
+/// Listens without ever producing a transcript, so interrupting a proactive
+/// opener doesn't immediately kick off a second AI request and reopen the race
+/// this test is trying to close.
+@MainActor
+private final class SilentVoiceEngine: VoiceEngine {
+    private(set) var spokenTexts: [String] = []
+
+    func startListening() -> AsyncThrowingStream<VoiceEvent, Error> {
+        AsyncThrowingStream { continuation in
+            continuation.finish()
+        }
+    }
+
+    func stopListening() {}
+
+    func speak(_ text: String) async throws {
+        spokenTexts.append(text)
+    }
+
+    func stopSpeaking() {}
 }
 
 /// Polls a condition until it's true or a short timeout elapses — used
