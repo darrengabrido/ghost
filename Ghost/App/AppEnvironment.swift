@@ -16,6 +16,7 @@ struct AppEnvironment {
     let apiKeyStore: APIKeyStore
     let healthDataProvider: HealthDataProvider
     let timelineStore: TimelineStore
+    let proactiveSpeechStateStore: ProactiveSpeechStateStore
 
     /// The environment the app actually launches with.
     ///
@@ -39,7 +40,8 @@ struct AppEnvironment {
             userPreferences: userPreferences,
             apiKeyStore: apiKeyStore,
             healthDataProvider: HealthKitDataProvider(),
-            timelineStore: SwiftDataTimelineStore()
+            timelineStore: SwiftDataTimelineStore(),
+            proactiveSpeechStateStore: UserDefaultsProactiveSpeechStateStore()
         )
     }
 
@@ -74,7 +76,8 @@ struct AppEnvironment {
             userPreferences: InMemoryUserPreferencesStore(),
             apiKeyStore: InMemoryAPIKeyStore(),
             healthDataProvider: MockHealthDataProvider(),
-            timelineStore: InMemoryTimelineStore()
+            timelineStore: InMemoryTimelineStore(),
+            proactiveSpeechStateStore: InMemoryProactiveSpeechStateStore()
         )
     }
 
@@ -110,7 +113,8 @@ struct AppEnvironment {
             userPreferences: userPreferences,
             apiKeyStore: InMemoryAPIKeyStore(),
             healthDataProvider: MockHealthDataProvider(),
-            timelineStore: InMemoryTimelineStore()
+            timelineStore: InMemoryTimelineStore(),
+            proactiveSpeechStateStore: InMemoryProactiveSpeechStateStore()
         )
     }
 }

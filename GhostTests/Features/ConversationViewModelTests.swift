@@ -15,7 +15,8 @@ struct ConversationViewModelTests {
             conversationStore: store,
             preferences: InMemoryUserPreferencesStore(),
             healthDataProvider: MockHealthDataProvider(),
-            timelineStore: InMemoryTimelineStore()
+            timelineStore: InMemoryTimelineStore(),
+            proactiveSpeechStateStore: InMemoryProactiveSpeechStateStore()
         )
 
         viewModel.micTapped()
@@ -42,7 +43,8 @@ struct ConversationViewModelTests {
             conversationStore: InMemoryConversationStore(),
             preferences: InMemoryUserPreferencesStore(),
             healthDataProvider: MockHealthDataProvider(),
-            timelineStore: InMemoryTimelineStore()
+            timelineStore: InMemoryTimelineStore(),
+            proactiveSpeechStateStore: InMemoryProactiveSpeechStateStore()
         )
 
         await viewModel.start()
@@ -70,7 +72,8 @@ struct ConversationViewModelTests {
             conversationStore: InMemoryConversationStore(),
             preferences: InMemoryUserPreferencesStore(),
             healthDataProvider: healthProvider,
-            timelineStore: InMemoryTimelineStore()
+            timelineStore: InMemoryTimelineStore(),
+            proactiveSpeechStateStore: InMemoryProactiveSpeechStateStore()
         )
 
         await viewModel.start()
@@ -92,7 +95,8 @@ struct ConversationViewModelTests {
             conversationStore: InMemoryConversationStore(),
             preferences: InMemoryUserPreferencesStore(isVoiceInterruptionEnabled: true),
             healthDataProvider: MockHealthDataProvider(),
-            timelineStore: InMemoryTimelineStore()
+            timelineStore: InMemoryTimelineStore(),
+            proactiveSpeechStateStore: InMemoryProactiveSpeechStateStore()
         )
 
         viewModel.micTapped()
@@ -114,7 +118,8 @@ struct ConversationViewModelTests {
             conversationStore: InMemoryConversationStore(),
             preferences: InMemoryUserPreferencesStore(isVoiceInterruptionEnabled: false),
             healthDataProvider: MockHealthDataProvider(),
-            timelineStore: InMemoryTimelineStore()
+            timelineStore: InMemoryTimelineStore(),
+            proactiveSpeechStateStore: InMemoryProactiveSpeechStateStore()
         )
 
         viewModel.micTapped()

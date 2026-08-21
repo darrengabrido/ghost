@@ -9,6 +9,11 @@ protocol UserPreferencesStore: AnyObject {
     var voiceIdentifier: String { get set }
     var selectedAIProvider: AIProvider { get set }
 
+    /// Hours during which Ghost never speaks unprompted. `nil` means unset
+    /// (no quiet hours enforced) — there's no Settings control for this yet,
+    /// so it stays `nil` in production until one ships.
+    var quietHours: QuietHours? { get set }
+
     /// The model chosen for `provider`, or `provider.defaultModel` if none
     /// has been picked yet. Kept per-provider (rather than a single
     /// current value) so switching providers in Settings doesn't lose
@@ -24,6 +29,8 @@ final class UserDefaultsPreferencesStore: UserPreferencesStore {
         static let speechRate = "ghost.preferences.speechRate"
         static let interruption = "ghost.preferences.voiceInterruption"
         static let voiceIdentifier = "ghost.preferences.voiceIdentifier"
+        static let quietHoursStart = "ghost.preferences.quietHoursStart"
+        static let quietHoursEnd = "ghost.preferences.quietHoursEnd"
     }
 
     var speechRate: Double {
@@ -40,6 +47,13 @@ final class UserDefaultsPreferencesStore: UserPreferencesStore {
 
     var selectedAIProvider: AIProvider {
         didSet { defaults.set(selectedAIProvider.rawValue, forKey: AIProvider.preferencesKey) }
+    }
+
+    var quietHours: QuietHours? {
+        didSet {
+            defaults.set(quietHours?.startHour, forKey: Key.quietHoursStart)
+            defaults.set(quietHours?.endHour, forKey: Key.quietHoursEnd)
+        }
     }
 
     private let defaults: UserDefaults
@@ -59,6 +73,12 @@ final class UserDefaultsPreferencesStore: UserPreferencesStore {
         voiceIdentifier = defaults.string(forKey: Key.voiceIdentifier) ?? ""
         selectedAIProvider = defaults.string(forKey: AIProvider.preferencesKey)
             .flatMap(AIProvider.init(rawValue:)) ?? .anthropic
+        if let start = defaults.object(forKey: Key.quietHoursStart) as? Int,
+           let end = defaults.object(forKey: Key.quietHoursEnd) as? Int {
+            quietHours = QuietHours(startHour: start, endHour: end)
+        } else {
+            quietHours = nil
+        }
     }
 
     func selectedModel(for provider: AIProvider) -> String {
@@ -77,18 +97,21 @@ final class InMemoryUserPreferencesStore: UserPreferencesStore {
     var isVoiceInterruptionEnabled: Bool
     var voiceIdentifier: String
     var selectedAIProvider: AIProvider
+    var quietHours: QuietHours?
     private var models: [AIProvider: String] = [:]
 
     init(
         speechRate: Double = 0.5,
         isVoiceInterruptionEnabled: Bool = true,
         voiceIdentifier: String = "",
-        selectedAIProvider: AIProvider = .anthropic
+        selectedAIProvider: AIProvider = .anthropic,
+        quietHours: QuietHours? = nil
     ) {
         self.speechRate = speechRate
         self.isVoiceInterruptionEnabled = isVoiceInterruptionEnabled
         self.voiceIdentifier = voiceIdentifier
         self.selectedAIProvider = selectedAIProvider
+        self.quietHours = quietHours
     }
 
     func selectedModel(for provider: AIProvider) -> String {
