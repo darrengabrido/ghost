@@ -1,3 +1,4 @@
+import Foundation
 @testable import Ghost
 import Testing
 
