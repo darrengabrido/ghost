@@ -9,6 +9,7 @@ enum Log {
     static let persistence = Logger(subsystem: subsystem, category: "persistence")
     static let networking = Logger(subsystem: subsystem, category: "networking")
     static let health = Logger(subsystem: subsystem, category: "health")
+    static let presence = Logger(subsystem: subsystem, category: "presence")
 
     private static let subsystem = Bundle.main.bundleIdentifier ?? "com.oaktreehouse.ghost"
 }

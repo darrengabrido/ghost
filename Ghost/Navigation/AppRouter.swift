@@ -28,7 +28,8 @@ final class AppRouter {
                     conversationStore: environment.conversationStore,
                     preferences: environment.userPreferences,
                     healthDataProvider: environment.healthDataProvider,
-                    timelineStore: environment.timelineStore
+                    timelineStore: environment.timelineStore,
+                    interactionLog: environment.interactionLog
                 ),
                 router: self
             )

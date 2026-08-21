@@ -15,7 +15,8 @@ struct ConversationViewModelTests {
             conversationStore: store,
             preferences: InMemoryUserPreferencesStore(),
             healthDataProvider: MockHealthDataProvider(),
-            timelineStore: InMemoryTimelineStore()
+            timelineStore: InMemoryTimelineStore(),
+            interactionLog: InMemoryInteractionLog()
         )
 
         viewModel.micTapped()
@@ -42,7 +43,8 @@ struct ConversationViewModelTests {
             conversationStore: InMemoryConversationStore(),
             preferences: InMemoryUserPreferencesStore(),
             healthDataProvider: MockHealthDataProvider(),
-            timelineStore: InMemoryTimelineStore()
+            timelineStore: InMemoryTimelineStore(),
+            interactionLog: InMemoryInteractionLog()
         )
 
         await viewModel.start()
@@ -70,7 +72,8 @@ struct ConversationViewModelTests {
             conversationStore: InMemoryConversationStore(),
             preferences: InMemoryUserPreferencesStore(),
             healthDataProvider: healthProvider,
-            timelineStore: InMemoryTimelineStore()
+            timelineStore: InMemoryTimelineStore(),
+            interactionLog: InMemoryInteractionLog()
         )
 
         await viewModel.start()
@@ -92,7 +95,8 @@ struct ConversationViewModelTests {
             conversationStore: InMemoryConversationStore(),
             preferences: InMemoryUserPreferencesStore(isVoiceInterruptionEnabled: true),
             healthDataProvider: MockHealthDataProvider(),
-            timelineStore: InMemoryTimelineStore()
+            timelineStore: InMemoryTimelineStore(),
+            interactionLog: InMemoryInteractionLog()
         )
 
         viewModel.micTapped()
@@ -114,7 +118,8 @@ struct ConversationViewModelTests {
             conversationStore: InMemoryConversationStore(),
             preferences: InMemoryUserPreferencesStore(isVoiceInterruptionEnabled: false),
             healthDataProvider: MockHealthDataProvider(),
-            timelineStore: InMemoryTimelineStore()
+            timelineStore: InMemoryTimelineStore(),
+            interactionLog: InMemoryInteractionLog()
         )
 
         viewModel.micTapped()
@@ -125,6 +130,55 @@ struct ConversationViewModelTests {
         #expect(voiceEngine.stopSpeakingCallCount == 0)
         #expect(viewModel.orbState == .speaking)
         voiceEngine.stopSpeaking()
+    }
+
+    /// The screen-appear checkpoint, end to end: nobody tapped the mic, and
+    /// Ghost still ends up with something to say. `quietHours: nil` because the
+    /// production default (10pm–7am) would otherwise make this pass or fail
+    /// depending on what time CI ran.
+    @Test
+    func startSpeaksProactivelyWhenTheUserHasBeenAwayForDays() async {
+        let interactionLog = InMemoryInteractionLog(lastInteractionAt: Date.now.addingTimeInterval(-3 * 86_400))
+        let viewModel = ConversationViewModel(
+            voiceEngine: MockVoiceEngine(),
+            aiConversationService: MockAIConversationService(reply: "there you are"),
+            conversationStore: InMemoryConversationStore(),
+            preferences: InMemoryUserPreferencesStore(),
+            healthDataProvider: MockHealthDataProvider(),
+            timelineStore: InMemoryTimelineStore(),
+            interactionLog: interactionLog,
+            quietHours: nil
+        )
+
+        await viewModel.start()
+
+        #expect(viewModel.messages.count == 1)
+        #expect(viewModel.messages.first?.speaker == .ghost)
+        #expect(viewModel.orbState == .idle)
+        #expect(interactionLog.lastProactiveSpeechAt != nil)
+    }
+
+    /// The same checkpoint, with the decision going the other way — proof that
+    /// `start()` actually consults `SpeakingDecision` rather than speaking
+    /// whenever it finds signal.
+    @Test
+    func startStaysQuietWhenTheUserJustSpoke() async {
+        let interactionLog = InMemoryInteractionLog(lastInteractionAt: Date.now.addingTimeInterval(-90))
+        let viewModel = ConversationViewModel(
+            voiceEngine: MockVoiceEngine(),
+            aiConversationService: MockAIConversationService(reply: "there you are"),
+            conversationStore: InMemoryConversationStore(),
+            preferences: InMemoryUserPreferencesStore(),
+            healthDataProvider: MockHealthDataProvider(),
+            timelineStore: InMemoryTimelineStore(),
+            interactionLog: interactionLog,
+            quietHours: nil
+        )
+
+        await viewModel.start()
+
+        #expect(viewModel.messages.isEmpty)
+        #expect(interactionLog.lastProactiveSpeechAt == nil)
     }
 }
 
