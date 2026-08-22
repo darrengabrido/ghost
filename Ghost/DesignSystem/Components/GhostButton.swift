@@ -3,10 +3,10 @@ import SwiftUI
 /// The one button in Ghost. Liquid Glass throughout, because a filled
 /// rectangle would be the only opaque object in an app made of light.
 ///
-/// Note that `.primary` tints with `ghostMaple` while `.subtle` tints with
-/// `ghostFlare`: prominent glass carries its own label contrast, but plain
-/// glass leaves the label on the background, where maple would fall to
-/// 3.3:1. Same red family, two jobs.
+/// Note that `.primary` tints with `ghostAstral` while `.subtle` tints
+/// with `ghostStarlight`: prominent glass carries its own label contrast,
+/// but plain glass leaves the label on the background, where astral would
+/// fall below AA. Same cold-light family, two jobs.
 struct GhostButton: View {
     enum Style {
         case primary
@@ -28,11 +28,11 @@ struct GhostButton: View {
         case .primary:
             label
                 .buttonStyle(.glassProminent)
-                .tint(Color.ghostMaple)
+                .tint(Color.ghostAstral)
         case .subtle:
             label
                 .buttonStyle(.glass)
-                .tint(Color.ghostFlare)
+                .tint(Color.ghostStarlight)
         case .destructive:
             label
                 .buttonStyle(.glass)

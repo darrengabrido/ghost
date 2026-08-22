@@ -5,7 +5,7 @@ struct ConversationView: View {
     var router: AppRouter
 
     /// The screen has two compositions, not one. With nothing said yet the
-    /// orb is centred and alone; once there's a transcript it settles to
+    /// eye is centred and alone; once there's a transcript it settles to
     /// the bottom and gives the words the room. Pinning it to the bottom
     /// from the start leaves the first screen you ever see 70% empty with
     /// its only subject stranded at the edge.
@@ -16,7 +16,7 @@ struct ConversationView: View {
     var body: some View {
         ZStack {
             GhostAtmosphereBackground(intensity: atmosphereIntensity)
-                .animation(Theme.Motion.settle, value: viewModel.orbState)
+                .animation(Theme.Motion.settle, value: viewModel.eyeState)
 
             VStack(spacing: Theme.Spacing.lg) {
                 if hasTranscript {
@@ -26,7 +26,7 @@ struct ConversationView: View {
                     Spacer(minLength: 0)
                 }
 
-                orbCluster
+                eyeCluster
                     .padding(.bottom, hasTranscript ? Theme.Spacing.xl : 0)
 
                 if !hasTranscript {
@@ -56,11 +56,11 @@ struct ConversationView: View {
         }
     }
 
-    /// The room brightens and the wind picks up while Ghost is awake, then
-    /// settles back when it stops. This is the main way the app signals
-    /// state — the caption under the orb is only a caption.
+    /// The sky brightens and the stardust picks up while Ghost is awake,
+    /// then settles back when it stops. This is the main way the app
+    /// signals state — the caption under the eye is only a caption.
     private var atmosphereIntensity: Double {
-        switch viewModel.orbState {
+        switch viewModel.eyeState {
         case .idle: 0.55
         case .listening: 1.0
         case .thinking: 0.85
@@ -147,22 +147,22 @@ struct ConversationView: View {
             .padding(.leading, Theme.Spacing.xl)
     }
 
-    // MARK: - Orb
+    // MARK: - Eye
 
-    private var orbCluster: some View {
+    private var eyeCluster: some View {
         VStack(spacing: Theme.Spacing.md) {
             Button {
                 viewModel.micTapped()
             } label: {
-                PulsingOrb(state: viewModel.orbState, diameter: 168)
+                CosmicEye(state: viewModel.eyeState, diameter: 168)
             }
-            .buttonStyle(OrbPressStyle())
+            .buttonStyle(EyePressStyle())
             .accessibilityLabel(Text(statusText))
 
-            // Reserved height so the orb never shifts when listening
+            // Reserved height so the eye never shifts when listening
             // starts or stops.
             ZStack {
-                if viewModel.orbState == .listening {
+                if viewModel.eyeState == .listening {
                     WaveformView(levels: viewModel.audioLevels)
                 }
             }
@@ -173,7 +173,7 @@ struct ConversationView: View {
                 .tracking(Tracking.wide)
                 .foregroundStyle(Color.ghostTextSecondary)
                 .contentTransition(.opacity)
-                .animation(Theme.Motion.quick, value: viewModel.orbState)
+                .animation(Theme.Motion.quick, value: viewModel.eyeState)
         }
     }
 
@@ -191,7 +191,7 @@ struct ConversationView: View {
     )
 
     private var statusText: LocalizedStringKey {
-        switch viewModel.orbState {
+        switch viewModel.eyeState {
         case .idle: "conversation.idle"
         case .listening: "conversation.listening"
         case .thinking: "conversation.thinking"
@@ -200,10 +200,10 @@ struct ConversationView: View {
     }
 }
 
-/// The orb needs to acknowledge a press without a button chrome appearing
+/// The eye needs to acknowledge a press without a button chrome appearing
 /// around it. `.plain` gives no feedback at all, which on the app's only
 /// control reads as a dropped tap.
-private struct OrbPressStyle: ButtonStyle {
+private struct EyePressStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.94 : 1)
@@ -212,7 +212,7 @@ private struct OrbPressStyle: ButtonStyle {
 }
 
 /// User speech sits in neutral glass on the right; Ghost's own words sit
-/// in maple-tinted glass on the left, set in serif. The tint and the
+/// in aurora-tinted glass on the left, set in serif. The tint and the
 /// typeface both mean the same thing — this half of the transcript is the
 /// presence talking, not the interface.
 private struct MessageBubble: View {
@@ -225,7 +225,7 @@ private struct MessageBubble: View {
             if !isGhost { Spacer(minLength: Theme.Spacing.xl) }
 
             GhostGlass(
-                style: isGhost ? .ember : .regular,
+                style: isGhost ? .aurora : .regular,
                 cornerRadius: Theme.Radius.md
             ) {
                 Text(message.text)

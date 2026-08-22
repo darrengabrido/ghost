@@ -16,18 +16,18 @@ struct WindMote: Sendable {
     let opacity: Double
     /// 0 = far (small, barely parallaxes), 1 = near (large, swings wide).
     let depth: CGFloat
-    /// Embers glow in the accent; everything else is pale ash.
-    let isEmber: Bool
+    /// Bright grains burn in starlight; everything else is pale dust.
+    let isBright: Bool
 
     /// Builds a deterministic field. Same seed, same wind, every launch.
     ///
-    /// Most of the air is ash. Only about a quarter of it burns, and more
-    /// of that quarter sits in the near layer where it stays crisp —
-    /// tinting *every* mote red would turn the accent into a colour cast
-    /// and stop it meaning anything.
+    /// Most of the drift is dim dust. Only about a quarter of it shines,
+    /// and more of that quarter sits in the near layer where it stays
+    /// crisp — tinting *every* mote starlight would turn the accent into
+    /// a colour cast and stop it meaning anything.
     static func field(count: Int, seed: UInt64, near: Bool) -> [WindMote] {
         var generator = SeededGenerator(seed: seed)
-        let emberChance = near ? 0.35 : 0.18
+        let brightChance = near ? 0.35 : 0.18
 
         return (0..<count).map { _ in
             let depth = CGFloat.random(in: near ? 0.55...1 : 0...0.45, using: &generator)
@@ -41,13 +41,13 @@ struct WindMote: Sendable {
                 swaySpeed: CGFloat.random(in: 0.25...0.75, using: &generator),
                 opacity: Double.random(in: near ? 0.35...0.85 : 0.18...0.5, using: &generator),
                 depth: depth,
-                isEmber: Double.random(in: 0...1, using: &generator) < emberChance
+                isBright: Double.random(in: 0...1, using: &generator) < brightChance
             )
         }
     }
 }
 
-/// The always-on wind: ash and embers streaming across the frame on a slow
+/// The always-on drift: stardust streaming across the frame on a slow
 /// diagonal, parallaxing against device tilt.
 ///
 /// Two `Canvas` layers rather than a stack of SwiftUI shapes — sixty
@@ -56,10 +56,10 @@ struct WindMote: Sendable {
 /// the entire layer, not one per mote) and the near layer stays crisp and
 /// slightly elongated, which is what sells the direction of travel.
 struct Windfield: View {
-    /// The rare, burning minority.
-    var ember: Color = .ghostFlare
-    /// The pale majority.
-    var ash: Color = .ghostBone
+    /// The rare, shining minority.
+    var bright: Color = .ghostStarlight
+    /// The dim majority.
+    var dust: Color = .ghostStarWhite
     /// Scales opacity across the whole field. Rises when Ghost is awake.
     var intensity: Double = 1
 
@@ -75,7 +75,7 @@ struct Windfield: View {
             // values, never `self`.
             let time = reduceMotion ? 0 : AtmosphereClock.seconds(timeline.date)
             let frame = WindFrame(
-                ember: ember, ash: ash, intensity: intensity,
+                bright: bright, dust: dust, intensity: intensity,
                 tilt: tilt, time: time, elongation: 2.2
             )
             let far = Self.budgeted(Self.farField)
@@ -150,7 +150,7 @@ struct Windfield: View {
             // Fade in and out at the ends of travel so nothing pops.
             let fade = sin(Double(progress) * .pi)
             let alpha = mote.opacity * fade * frame.intensity
-                * (mote.isEmber ? 1 : 0.55)
+                * (mote.isBright ? 1 : 0.55)
                 * (0.8 + 0.2 * gust)
             guard alpha > 0.004 else { continue }
 
@@ -160,7 +160,7 @@ struct Windfield: View {
                 width: mote.size * frame.elongation,
                 height: mote.size
             )
-            let color = mote.isEmber ? frame.ember : frame.ash
+            let color = mote.isBright ? frame.bright : frame.dust
             context.fill(Path(ellipseIn: rect), with: .color(color.opacity(alpha)))
         }
     }
@@ -173,8 +173,8 @@ struct Windfield: View {
 /// Everything the renderer needs that isn't per-mote, bundled so `draw`
 /// keeps a signature a person can read.
 struct WindFrame: Sendable {
-    let ember: Color
-    let ash: Color
+    let bright: Color
+    let dust: Color
     let intensity: Double
     let tilt: CGSize
     let time: Double
@@ -185,7 +185,7 @@ struct WindFrame: Sendable {
     /// distance costs you both brightness and any sense of motion blur.
     var distant: WindFrame {
         WindFrame(
-            ember: ember, ash: ash, intensity: intensity * 0.55,
+            bright: bright, dust: dust, intensity: intensity * 0.55,
             tilt: tilt, time: time, elongation: 1
         )
     }
@@ -193,7 +193,7 @@ struct WindFrame: Sendable {
 
 #Preview {
     ZStack {
-        Color.ghostCharcoal.ignoresSafeArea()
+        Color.ghostAbyss.ignoresSafeArea()
         Windfield()
     }
 }
