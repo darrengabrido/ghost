@@ -25,7 +25,7 @@ final class ScreenshotTests: XCTestCase {
 
         app.buttons["Continue"].tap()
 
-        // The empty composition: eye centred, before anything is said.
+        // The empty composition: spirit centred, before anything is said.
         XCTAssertTrue(app.staticTexts["Tap to speak"].waitForExistence(timeout: 30))
         capture(app, named: "02-conversation-idle")
 

@@ -10,7 +10,7 @@ enum Theme {
         static let md: CGFloat = 16
         static let lg: CGFloat = 24
         static let xl: CGFloat = 40
-        /// Reserved for the large silences — around the eye, above a
+        /// Reserved for the large silences — around the spirit, above a
         /// display title. Emptiness is most of what makes this feel
         /// expensive, so spend it deliberately.
         static let xxl: CGFloat = 64
@@ -44,7 +44,7 @@ enum Theme {
         static let faint: Double = 0.05
     }
 
-    /// The soft radial glow behind the eye and other presence surfaces.
+    /// The soft radial glow behind the spirit and other presence surfaces.
     static func glow(
         color: Color = .ghostAccent,
         radius: CGFloat = 120,

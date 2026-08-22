@@ -17,7 +17,7 @@ struct BreathingModifier: ViewModifier {
             .opacity(isExpanded ? 1.0 : 0.85)
             .onAppear(perform: sync)
             // Without this the breath only ever starts for a view that was
-            // already active when it mounted — the eye wakes from idle
+            // already active when it mounted — the spirit wakes from idle
             // after appearing, so `onAppear` alone leaves it inert for the
             // entire life of the screen.
             .onChange(of: isActive) { _, _ in sync() }

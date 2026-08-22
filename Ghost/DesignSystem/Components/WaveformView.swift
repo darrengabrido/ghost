@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// A minimal live waveform driven by microphone amplitude samples
-/// (0...1). Sits directly below the eye while Ghost is listening.
+/// (0...1). Sits directly below the spirit while Ghost is listening.
 struct WaveformView: View {
     var levels: [CGFloat]
     var color: Color = .ghostStarlight

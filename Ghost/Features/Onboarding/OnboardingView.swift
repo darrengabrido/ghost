@@ -30,7 +30,7 @@ struct OnboardingView: View {
         VStack(spacing: Theme.Spacing.xl) {
             Spacer(minLength: 0)
 
-            CosmicEye(state: .idle, diameter: 190)
+            SpiritWisp(state: .idle, diameter: 190)
 
             VStack(spacing: Theme.Spacing.md) {
                 Text("onboarding.title")

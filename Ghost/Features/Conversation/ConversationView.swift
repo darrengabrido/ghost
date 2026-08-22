@@ -5,7 +5,7 @@ struct ConversationView: View {
     var router: AppRouter
 
     /// The screen has two compositions, not one. With nothing said yet the
-    /// eye is centred and alone; once there's a transcript it settles to
+    /// spirit is centred and alone; once there's a transcript it settles to
     /// the bottom and gives the words the room. Pinning it to the bottom
     /// from the start leaves the first screen you ever see 70% empty with
     /// its only subject stranded at the edge.
@@ -16,7 +16,7 @@ struct ConversationView: View {
     var body: some View {
         ZStack {
             GhostAtmosphereBackground(intensity: atmosphereIntensity)
-                .animation(Theme.Motion.settle, value: viewModel.eyeState)
+                .animation(Theme.Motion.settle, value: viewModel.presenceState)
 
             VStack(spacing: Theme.Spacing.lg) {
                 if hasTranscript {
@@ -26,7 +26,7 @@ struct ConversationView: View {
                     Spacer(minLength: 0)
                 }
 
-                eyeCluster
+                presenceCluster
                     .padding(.bottom, hasTranscript ? Theme.Spacing.xl : 0)
 
                 if !hasTranscript {
@@ -58,9 +58,9 @@ struct ConversationView: View {
 
     /// The sky brightens and the stardust picks up while Ghost is awake,
     /// then settles back when it stops. This is the main way the app
-    /// signals state — the caption under the eye is only a caption.
+    /// signals state — the caption under the spirit is only a caption.
     private var atmosphereIntensity: Double {
-        switch viewModel.eyeState {
+        switch viewModel.presenceState {
         case .idle: 0.55
         case .listening: 1.0
         case .thinking: 0.85
@@ -147,22 +147,22 @@ struct ConversationView: View {
             .padding(.leading, Theme.Spacing.xl)
     }
 
-    // MARK: - Eye
+    // MARK: - Presence
 
-    private var eyeCluster: some View {
+    private var presenceCluster: some View {
         VStack(spacing: Theme.Spacing.md) {
             Button {
                 viewModel.micTapped()
             } label: {
-                CosmicEye(state: viewModel.eyeState, diameter: 168)
+                SpiritWisp(state: viewModel.presenceState, diameter: 168)
             }
-            .buttonStyle(EyePressStyle())
+            .buttonStyle(WispPressStyle())
             .accessibilityLabel(Text(statusText))
 
-            // Reserved height so the eye never shifts when listening
+            // Reserved height so the spirit never shifts when listening
             // starts or stops.
             ZStack {
-                if viewModel.eyeState == .listening {
+                if viewModel.presenceState == .listening {
                     WaveformView(levels: viewModel.audioLevels)
                 }
             }
@@ -173,7 +173,7 @@ struct ConversationView: View {
                 .tracking(Tracking.wide)
                 .foregroundStyle(Color.ghostTextSecondary)
                 .contentTransition(.opacity)
-                .animation(Theme.Motion.quick, value: viewModel.eyeState)
+                .animation(Theme.Motion.quick, value: viewModel.presenceState)
         }
     }
 
@@ -191,7 +191,7 @@ struct ConversationView: View {
     )
 
     private var statusText: LocalizedStringKey {
-        switch viewModel.eyeState {
+        switch viewModel.presenceState {
         case .idle: "conversation.idle"
         case .listening: "conversation.listening"
         case .thinking: "conversation.thinking"
@@ -200,10 +200,10 @@ struct ConversationView: View {
     }
 }
 
-/// The eye needs to acknowledge a press without a button chrome appearing
+/// The spirit needs to acknowledge a press without a button chrome appearing
 /// around it. `.plain` gives no feedback at all, which on the app's only
 /// control reads as a dropped tap.
-private struct EyePressStyle: ButtonStyle {
+private struct WispPressStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.94 : 1)

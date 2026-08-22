@@ -20,7 +20,7 @@ struct ConversationViewModelTests {
 
         viewModel.micTapped()
 
-        try await waitUntil { viewModel.eyeState == .idle }
+        try await waitUntil { viewModel.presenceState == .idle }
 
         #expect(viewModel.messages.count == 2)
         #expect(viewModel.messages.first?.speaker == .user)
@@ -48,7 +48,7 @@ struct ConversationViewModelTests {
         await viewModel.start()
         viewModel.micTapped()
 
-        try await waitUntil { viewModel.eyeState == .idle }
+        try await waitUntil { viewModel.presenceState == .idle }
 
         #expect(requestWasMade)
         #expect(capturedHealthContext?.contains("steps") == true)
@@ -76,7 +76,7 @@ struct ConversationViewModelTests {
         await viewModel.start()
         viewModel.micTapped()
 
-        try await waitUntil { viewModel.eyeState == .idle }
+        try await waitUntil { viewModel.presenceState == .idle }
 
         #expect(requestWasMade)
         #expect(capturedHealthContext == nil)
@@ -96,12 +96,12 @@ struct ConversationViewModelTests {
         )
 
         viewModel.micTapped()
-        try await waitUntil { viewModel.eyeState == .speaking }
+        try await waitUntil { viewModel.presenceState == .speaking }
 
         viewModel.micTapped()
 
         #expect(voiceEngine.stopSpeakingCallCount == 1)
-        #expect(viewModel.eyeState != .speaking)
+        #expect(viewModel.presenceState != .speaking)
     }
 
     @Test
@@ -118,12 +118,12 @@ struct ConversationViewModelTests {
         )
 
         viewModel.micTapped()
-        try await waitUntil { viewModel.eyeState == .speaking }
+        try await waitUntil { viewModel.presenceState == .speaking }
 
         viewModel.micTapped()
 
         #expect(voiceEngine.stopSpeakingCallCount == 0)
-        #expect(viewModel.eyeState == .speaking)
+        #expect(viewModel.presenceState == .speaking)
         voiceEngine.stopSpeaking()
     }
 }
