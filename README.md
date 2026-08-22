@@ -16,9 +16,10 @@ chatbot" and more like something present in the room with you.
 
 - 🎙️ **Voice-first conversation** — press-and-hold or wake-word activated
   listening, live transcription, streamed spoken responses.
-- 🌘 **Atmospheric UI** — a single breathing, pulsing "presence" (the
-  orb) that reacts to Ghost listening, thinking, and speaking, over a
-  dark, minimal canvas.
+- 🌌 **Atmospheric UI** — a single "presence" (a spirit of starlight,
+  its soul-light wrapped in veils of aurora) that swells, gathers, and
+  flares as Ghost listens, thinks, and speaks, over a deep-space canvas
+  of starfield and nebula light.
 - 🗂️ **Conversation history** — past conversations saved locally and
   searchable.
 - ⚙️ **Configurable voice & AI providers** — pick Anthropic, OpenAI, xAI

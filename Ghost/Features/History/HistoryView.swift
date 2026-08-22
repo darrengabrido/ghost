@@ -22,7 +22,7 @@ struct HistoryView: View {
 
     private var emptyState: some View {
         VStack(spacing: Theme.Spacing.lg) {
-            PulsingOrb(state: .idle, diameter: 76)
+            SpiritWisp(state: .idle, diameter: 76)
                 .opacity(0.5)
 
             Text("history.empty")
@@ -76,7 +76,7 @@ struct HistoryView: View {
         // worse than no affordance.
         GhostGlass(cornerRadius: Theme.Radius.md) {
             HStack(alignment: .top, spacing: Theme.Spacing.md) {
-                // A dim ember standing in for the orb — each conversation
+                // A dim star standing in for the spirit — each conversation
                 // is one of the times the presence was awake.
                 Circle()
                     .fill(Color.ghostAccent)

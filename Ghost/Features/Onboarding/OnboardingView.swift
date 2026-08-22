@@ -5,7 +5,7 @@ struct OnboardingView: View {
 
     var body: some View {
         ZStack {
-            // Held back from full strength: the room hasn't woken yet.
+            // Held back from full strength: the sky hasn't woken yet.
             GhostAtmosphereBackground(intensity: 0.7)
 
             // Centred when it fits, scrollable when it doesn't. Onboarding
@@ -30,7 +30,7 @@ struct OnboardingView: View {
         VStack(spacing: Theme.Spacing.xl) {
             Spacer(minLength: 0)
 
-            PulsingOrb(state: .idle, diameter: 190)
+            SpiritWisp(state: .idle, diameter: 190)
 
             VStack(spacing: Theme.Spacing.md) {
                 Text("onboarding.title")

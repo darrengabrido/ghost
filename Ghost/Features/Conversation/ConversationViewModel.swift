@@ -4,7 +4,7 @@ import Foundation
 @MainActor
 final class ConversationViewModel {
     private(set) var messages: [Message] = []
-    private(set) var orbState: PulsingOrb.Phase = .idle
+    private(set) var presenceState: SpiritWisp.Phase = .idle
     private(set) var liveTranscript: String = ""
     private(set) var audioLevels: [CGFloat] = Array(repeating: 0, count: 24)
     var errorMessage: String?
@@ -50,7 +50,7 @@ final class ConversationViewModel {
     private static let healthLookback: TimeInterval = 24 * 60 * 60
 
     func micTapped() {
-        switch orbState {
+        switch presenceState {
         case .listening:
             stopListening()
         case .speaking:
@@ -65,7 +65,7 @@ final class ConversationViewModel {
     }
 
     private func startListening() {
-        orbState = .listening
+        presenceState = .listening
         liveTranscript = ""
 
         listenTask = Task {
@@ -83,7 +83,7 @@ final class ConversationViewModel {
                 }
             } catch {
                 errorMessage = error.localizedDescription
-                orbState = .idle
+                presenceState = .idle
             }
         }
     }
@@ -92,18 +92,18 @@ final class ConversationViewModel {
         listenTask?.cancel()
         listenTask = nil
         voiceEngine.stopListening()
-        orbState = .idle
+        presenceState = .idle
     }
 
     private func handleUserUtterance(_ text: String) async {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            orbState = .idle
+            presenceState = .idle
             return
         }
 
         let userMessage = Message(speaker: .user, text: text)
         messages.append(userMessage)
-        orbState = .thinking
+        presenceState = .thinking
 
         do {
             var reply = ""
@@ -114,7 +114,7 @@ final class ConversationViewModel {
             let ghostMessage = Message(speaker: .ghost, text: reply)
             messages.append(ghostMessage)
 
-            orbState = .speaking
+            presenceState = .speaking
             try await voiceEngine.speak(reply)
 
             try await conversationStore.save(messages)
@@ -122,8 +122,8 @@ final class ConversationViewModel {
             errorMessage = error.localizedDescription
         }
 
-        if orbState == .speaking {
-            orbState = .idle
+        if presenceState == .speaking {
+            presenceState = .idle
         }
     }
 }

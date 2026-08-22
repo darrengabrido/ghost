@@ -4,7 +4,7 @@ import SwiftUI
 ///
 /// Now that the deployment target is iOS 26 this is the real thing — no
 /// `#available` branches, no `.ultraThinMaterial` impersonation. What's
-/// added on top of the system effect is the hairline: a bone-white edge
+/// added on top of the system effect is the hairline: a star-white edge
 /// that runs bright at the top-leading corner and fades to nothing at the
 /// bottom-trailing one, as though a single low light sat above the frame.
 /// System glass alone reads as translucent; the directional hairline is
@@ -19,9 +19,9 @@ struct GhostGlass<Content: View>: View {
         case regular
         /// Reacts to touch — use for anything tappable.
         case interactive
-        /// Maple-tinted. Reserved for surfaces that are Ghost speaking,
+        /// Astral-tinted. Reserved for surfaces that are Ghost speaking,
         /// so the tint always means "this is the presence, not the app".
-        case ember
+        case aurora
     }
 
     var style: Style = .regular
@@ -59,14 +59,14 @@ struct GhostGlass<Content: View>: View {
         switch style {
         case .regular: .regular
         case .interactive: .regular.interactive()
-        case .ember: .regular.tint(Color.ghostMaple.opacity(0.26))
+        case .aurora: .regular.tint(Color.ghostAstral.opacity(0.26))
         }
     }
 
     private var opaqueFill: Color {
         switch style {
-        case .regular, .interactive: .ghostAshRaised
-        case .ember: .ghostAshEmber
+        case .regular, .interactive: .ghostSlate
+        case .aurora: .ghostSlateAurora
         }
     }
 }
@@ -101,8 +101,8 @@ struct GhostGlassContainer<Content: View>: View {
                         .frame(maxWidth: .infinity)
                         .padding(Theme.Spacing.lg)
                 }
-                GhostGlass(style: .ember) {
-                    Text("Ember")
+                GhostGlass(style: .aurora) {
+                    Text("Aurora")
                         .font(.ghostVoice)
                         .foregroundStyle(Color.ghostTextPrimary)
                         .frame(maxWidth: .infinity)

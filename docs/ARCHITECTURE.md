@@ -132,29 +132,30 @@ non-feature-specific building blocks (`Theme`, `Colors`, `Typography`,
 palette and motion language instead of redefining it.
 
 `Colors` is two layers, and the split is enforced rather than suggested:
-a **palette** naming pigments (`ghostMaple`, `ghostBone`) and **semantic**
+a **palette** naming pigments (`ghostAstral`, `ghostStarWhite`) and **semantic**
 aliases naming jobs (`ghostAccent`, `ghostTextPrimary`). `DesignSystem/`
 may reach for pigments — it is the paint layer. `Features/` may not, so
 the pigments can be re-mixed without a sweep through every screen.
 
-Red is the identity rather than an accent, which forces one rule worth
-knowing before touching a screen: `ghostMaple` is a *field* colour — fills,
-glows, glass tints, strokes — and never carries small text, where it sits
-at 3.3:1 on the charcoal ground. Red type uses `ghostFlare` (6.3:1). For
-the same reason destructive actions can't be signalled by redness alone in
-an already-red app, so they pair `ghostCrimson` with a glyph.
+Blue-white starlight is the identity rather than an accent, which forces
+one rule worth knowing before touching a screen: `ghostAstral` is a
+*field* colour — fills, glows, glass tints, strokes — and never carries
+small text, where it sits below contrast on the abyss ground. Bright type
+uses `ghostStarlight` (better than 12:1). Destructive actions carry
+`ghostCrimson` — the only red left in the app — paired with a glyph.
 
-Every surface sits on `GhostAtmosphereBackground`: a radial ground of warm
-charcoal sinking to sumi, drifting fog, a `Canvas`-drawn wind of ash and
-embers, static film grain, vignette. Two details there are load-bearing
-rather than decorative — one fog bank is cold (`ghostMoon`) because warm
-tones flatten with nothing cool to sit against, and only about a quarter
-of the wind is ember-tinted, because tinting all of it would turn the
-accent into a colour cast. It is
+Every surface sits on `GhostAtmosphereBackground`: a radial ground of
+indigo abyss sinking to void, a seeded twinkling starfield, drifting
+nebulae, a `Canvas`-drawn stream of stardust, static film grain, vignette.
+Two details there are load-bearing rather than decorative — one nebula
+bank is warm (`ghostDawn`) because cool tones flatten with nothing warm
+to sit against, and only about a quarter of the stardust is
+starlight-tinted, because tinting all of it would turn the accent into a
+colour cast. It is
 not decoration — Liquid Glass has nothing to refract over a flat fill, so
 the atmosphere is what makes the glass read as glass. Its `intensity`
-parameter is also the app's primary state signal: the room brightens and
-the wind thickens while Ghost is awake.
+parameter is also the app's primary state signal: the sky brightens and
+the stardust thickens while Ghost is awake.
 
 ## Deployment target
 

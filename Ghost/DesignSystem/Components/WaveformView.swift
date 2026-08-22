@@ -1,10 +1,10 @@
 import SwiftUI
 
 /// A minimal live waveform driven by microphone amplitude samples
-/// (0...1). Sits directly below the orb while Ghost is listening.
+/// (0...1). Sits directly below the spirit while Ghost is listening.
 struct WaveformView: View {
     var levels: [CGFloat]
-    var color: Color = .ghostFlare
+    var color: Color = .ghostStarlight
     var barWidth: CGFloat = 2.5
     var spacing: CGFloat = 5
     var maxHeight: CGFloat = 44

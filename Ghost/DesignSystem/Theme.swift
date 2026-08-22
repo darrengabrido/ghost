@@ -10,7 +10,7 @@ enum Theme {
         static let md: CGFloat = 16
         static let lg: CGFloat = 24
         static let xl: CGFloat = 40
-        /// Reserved for the large silences — around the orb, above a
+        /// Reserved for the large silences — around the spirit, above a
         /// display title. Emptiness is most of what makes this feel
         /// expensive, so spend it deliberately.
         static let xxl: CGFloat = 64
@@ -35,7 +35,7 @@ enum Theme {
         static let morph = Animation.spring(response: 0.55, dampingFraction: 0.78)
     }
 
-    /// Opacities for the warm bone hairlines that catch the light along a
+    /// Opacities for the star-white hairlines that catch the light along a
     /// glass edge. This is the single detail that most separates glass
     /// that looks expensive from glass that looks like a blur.
     enum Hairline {
@@ -44,7 +44,7 @@ enum Theme {
         static let faint: Double = 0.05
     }
 
-    /// The soft radial glow behind the orb and other presence surfaces.
+    /// The soft radial glow behind the spirit and other presence surfaces.
     static func glow(
         color: Color = .ghostAccent,
         radius: CGFloat = 120,
@@ -63,9 +63,9 @@ enum Theme {
             .blendMode(.screen)
     }
 
-    /// A warm bone hairline for glass edges and dividers.
+    /// A star-white hairline for glass edges and dividers.
     static func hairline(_ opacity: Double = Hairline.regular) -> Color {
-        Color.ghostBone.opacity(opacity)
+        Color.ghostStarWhite.opacity(opacity)
     }
 
     /// The directional edge light on a glass surface: bright at the
