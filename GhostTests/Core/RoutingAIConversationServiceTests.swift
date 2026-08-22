@@ -6,7 +6,7 @@ struct RoutingAIConversationServiceTests {
     @Test
     func fallsBackToUnconfiguredWhenNothingIsStored() async throws {
         let suiteName = "RoutingAIConversationServiceTests.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suiteName)!
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
         defer { defaults.removePersistentDomain(forName: suiteName) }
 
         let apiKeyStore = InMemoryAPIKeyStore()
@@ -20,7 +20,7 @@ struct RoutingAIConversationServiceTests {
     @Test
     func fallsBackToUnconfiguredForAnyStoredProviderWithoutAKey() async throws {
         let suiteName = "RoutingAIConversationServiceTests.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suiteName)!
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
         defer { defaults.removePersistentDomain(forName: suiteName) }
         defaults.set(AIProvider.gemini.rawValue, forKey: AIProvider.preferencesKey)
 
